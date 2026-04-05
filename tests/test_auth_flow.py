@@ -1,7 +1,9 @@
 from src.application.session.commands.dto import LoginCommand, LogoutCommand, RegisterCommand
 from src.application.session.handlers.login_handler import LoginHandler
+from src.application.session.handlers.list_sessions_handler import ListSessionsHandler
 from src.application.session.handlers.logout_handler import LogoutHandler
 from src.application.session.handlers.register_handler import RegisterHandler
+from src.application.session.queries.dto import ListSessionsQuery
 from src.application.token.commands.dto import RefreshCommand
 from src.application.token.handlers.refresh_handler import RefreshHandler
 from src.domain.identity.account.entity import Account
@@ -97,8 +99,21 @@ def test_refresh_rotates_token_and_logout_closes_session() -> None:
         refresh_ttl_seconds=60 * 60 * 24,
     )
     logout = LogoutHandler(uow=ctx.uow, clock=ctx.clock)
+    list_sessions = ListSessionsHandler(uow=ctx.uow)
 
-    first = login(LoginCommand(email="admin@example.com", password="admin12345"))
+    first = login(
+        LoginCommand(
+            email="admin@example.com",
+            password="admin12345",
+            user_agent_raw=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/123.0.0.0 Safari/537.36"
+            ),
+            device_type="desktop",
+            browser_name="chrome",
+        )
+    )
     first_refresh_claims = ctx.token_issuer.decode_refresh(first.refresh_token)
 
     second = refresh(RefreshCommand(refresh_token=first.refresh_token))
@@ -106,6 +121,12 @@ def test_refresh_rotates_token_and_logout_closes_session() -> None:
 
     assert second.refresh_token != first.refresh_token
     assert second_refresh_claims["token_id"] != first_refresh_claims["token_id"]
+
+    sessions_before_logout = list_sessions(
+        ListSessionsQuery(account_id=second_refresh_claims["account_id"])
+    )
+    assert len(sessions_before_logout) == 1
+    assert sessions_before_logout[0].browser_name == "chrome"
 
     logout(LogoutCommand(session_id=second_refresh_claims["session_id"]))
     session = ctx.uow.repositories.sessions.get_by_id(second_refresh_claims["session_id"])

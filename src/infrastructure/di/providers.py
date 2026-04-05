@@ -9,8 +9,10 @@ from src.application.identity.handlers.get_me_handler import GetMeHandler
 from src.application.identity.queries.dto import GetMeQuery
 from src.application.session.commands.dto import LoginCommand, LogoutCommand, RegisterCommand
 from src.application.session.handlers.login_handler import LoginHandler
+from src.application.session.handlers.list_sessions_handler import ListSessionsHandler
 from src.application.session.handlers.logout_handler import LogoutHandler
 from src.application.session.handlers.register_handler import RegisterHandler
+from src.application.session.queries.dto import ListSessionsQuery
 from src.application.token.commands.dto import RefreshCommand
 from src.application.token.handlers.refresh_handler import RefreshHandler
 from src.infrastructure.clock.system_clock import SystemClock
@@ -98,6 +100,7 @@ def build_runtime() -> RuntimeContainer:
     )
     facade.register_command_handler(LogoutCommand, LogoutHandler(uow=uow, clock=clock))
     facade.register_query_handler(GetMeQuery, GetMeHandler(uow=uow))
+    facade.register_query_handler(ListSessionsQuery, ListSessionsHandler(uow=uow))
 
     return RuntimeContainer(facade=facade, token_issuer=token_issuer)
 

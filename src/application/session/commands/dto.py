@@ -10,7 +10,12 @@ class LoginCommand:
     email: str
     password: str
     ip: str | None = None
-    user_agent: str | None = None
+    user_agent_raw: str | None = None
+    device_type: str | None = None
+    os_name: str | None = None
+    os_version: str | None = None
+    browser_name: str | None = None
+    browser_version: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

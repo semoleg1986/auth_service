@@ -1,5 +1,7 @@
 """Pydantic-схемы auth API."""
 
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -9,7 +11,12 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
     ip: str | None = None
-    user_agent: str | None = None
+    user_agent_raw: str | None = None
+    device_type: str | None = None
+    os_name: str | None = None
+    os_version: str | None = None
+    browser_name: str | None = None
+    browser_version: str | None = None
 
 
 class RefreshRequest(BaseModel):
@@ -55,3 +62,25 @@ class JwksResponse(BaseModel):
     """Публичный JWKS документ."""
 
     keys: list[dict]
+
+
+class SessionItemResponse(BaseModel):
+    """Элемент списка сессий пользователя."""
+
+    session_id: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    ip: str | None = None
+    user_agent_raw: str | None = None
+    device_type: str | None = None
+    os_name: str | None = None
+    os_version: str | None = None
+    browser_name: str | None = None
+    browser_version: str | None = None
+
+
+class SessionListResponse(BaseModel):
+    """Список сессий пользователя."""
+
+    items: list[SessionItemResponse]

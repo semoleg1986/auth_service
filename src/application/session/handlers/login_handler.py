@@ -59,7 +59,12 @@ class LoginHandler:
             now=now,
             refresh_token_id=refresh_token_id,
             ip=command.ip,
-            user_agent=command.user_agent,
+            user_agent_raw=command.user_agent_raw,
+            device_type=command.device_type,
+            os_name=command.os_name,
+            os_version=command.os_version,
+            browser_name=command.browser_name,
+            browser_version=command.browser_version,
         )
         refresh = RefreshToken.issue(
             token_id=refresh_token_id,

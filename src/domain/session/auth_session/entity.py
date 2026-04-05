@@ -19,7 +19,12 @@ class AuthSession(AggregateRoot):
     refresh_token_id: str | None
     status: SessionStatus
     ip: str | None = None
-    user_agent: str | None = None
+    user_agent_raw: str | None = None
+    device_type: str | None = None
+    os_name: str | None = None
+    os_version: str | None = None
+    browser_name: str | None = None
+    browser_version: str | None = None
 
     @classmethod
     def start(
@@ -30,7 +35,12 @@ class AuthSession(AggregateRoot):
         now: datetime,
         refresh_token_id: str | None = None,
         ip: str | None = None,
-        user_agent: str | None = None,
+        user_agent_raw: str | None = None,
+        device_type: str | None = None,
+        os_name: str | None = None,
+        os_version: str | None = None,
+        browser_name: str | None = None,
+        browser_version: str | None = None,
     ) -> "AuthSession":
         """Создает новую активную сессию."""
 
@@ -40,7 +50,12 @@ class AuthSession(AggregateRoot):
             refresh_token_id=refresh_token_id,
             status=SessionStatus.ACTIVE,
             ip=ip,
-            user_agent=user_agent,
+            user_agent_raw=user_agent_raw,
+            device_type=device_type,
+            os_name=os_name,
+            os_version=os_version,
+            browser_name=browser_name,
+            browser_version=browser_version,
             created_at=now,
             updated_at=now,
         )

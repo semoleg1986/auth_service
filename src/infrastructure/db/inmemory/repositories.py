@@ -46,6 +46,9 @@ class InMemorySessionRepository:
     def get_by_id(self, session_id: str) -> AuthSession | None:
         return self.by_id.get(session_id)
 
+    def list_by_account_id(self, account_id: str) -> list[AuthSession]:
+        return [item for item in self.by_id.values() if item.account_id == account_id]
+
 
 @dataclass(slots=True)
 class InMemoryRefreshTokenRepository:

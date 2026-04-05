@@ -18,3 +18,6 @@ class AuthSessionRepository(Protocol):
 
     def get_by_id(self, session_id: str) -> AuthSession | None:
         """Возвращает сессию по идентификатору."""
+
+    def list_by_account_id(self, account_id: str) -> list[AuthSession]:
+        """Возвращает все сессии аккаунта."""

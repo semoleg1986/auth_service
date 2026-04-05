@@ -137,6 +137,22 @@ paths:
                 $ref: '#/components/schemas/MeResponse'
         '401': { $ref: '#/components/responses/Unauthorized' }
 
+  /v1/auth/sessions:
+    get:
+      tags: [auth]
+      summary: Список сессий текущего пользователя
+      operationId: listMySessions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список сессий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
   /.well-known/jwks.json:
     get:
       tags: [public]
@@ -202,7 +218,23 @@ components:
         ip:
           type: string
           nullable: true
-        user_agent:
+        user_agent_raw:
+          type: string
+          nullable: true
+        device_type:
+          type: string
+          enum: [mobile, desktop, tablet, other]
+          nullable: true
+        os_name:
+          type: string
+          nullable: true
+        os_version:
+          type: string
+          nullable: true
+        browser_name:
+          type: string
+          nullable: true
+        browser_version:
           type: string
           nullable: true
 
@@ -281,3 +313,52 @@ components:
           items:
             type: object
             additionalProperties: true
+
+    SessionItemResponse:
+      type: object
+      required:
+        [session_id, status, created_at, updated_at]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, closed, revoked]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        ip:
+          type: string
+          nullable: true
+        user_agent_raw:
+          type: string
+          nullable: true
+        device_type:
+          type: string
+          enum: [mobile, desktop, tablet, other]
+          nullable: true
+        os_name:
+          type: string
+          nullable: true
+        os_version:
+          type: string
+          nullable: true
+        browser_name:
+          type: string
+          nullable: true
+        browser_version:
+          type: string
+          nullable: true
+
+    SessionListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionItemResponse'

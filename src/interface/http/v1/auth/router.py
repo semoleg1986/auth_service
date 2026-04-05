@@ -7,13 +7,17 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from src.application.identity.queries.dto import GetMeQuery
 from src.application.ports.token_issuer import TokenIssuer
 from src.application.session.commands.dto import LoginCommand, LogoutCommand, RegisterCommand
+from src.application.session.queries.dto import ListSessionsQuery
 from src.application.token.commands.dto import RefreshCommand
+from src.infrastructure.http.user_agent_parser import parse_user_agent
 from src.interface.http.v1.schemas.auth import (
     LoginRequest,
     LogoutRequest,
     MeResponse,
     RefreshRequest,
     RegisterRequest,
+    SessionItemResponse,
+    SessionListResponse,
     TokenPairResponse,
 )
 from src.interface.http.wiring import get_facade, get_token_issuer
@@ -35,15 +39,25 @@ def register(payload: RegisterRequest, facade=Depends(get_facade)) -> dict:
 
 
 @router.post("/login", response_model=TokenPairResponse)
-def login(payload: LoginRequest, facade=Depends(get_facade)) -> TokenPairResponse:
+def login(
+    payload: LoginRequest,
+    facade=Depends(get_facade),
+    user_agent_header: str | None = Header(default=None, alias="User-Agent"),
+) -> TokenPairResponse:
     """Выполняет login и выдает пару токенов."""
 
+    parsed = parse_user_agent(payload.user_agent_raw or user_agent_header)
     result = facade.execute(
         LoginCommand(
             email=str(payload.email),
             password=payload.password,
             ip=payload.ip,
-            user_agent=payload.user_agent,
+            user_agent_raw=parsed.user_agent_raw,
+            device_type=payload.device_type or parsed.device_type,
+            os_name=payload.os_name or parsed.os_name,
+            os_version=payload.os_version or parsed.os_version,
+            browser_name=payload.browser_name or parsed.browser_name,
+            browser_version=payload.browser_version or parsed.browser_version,
         )
     )
     return TokenPairResponse(**result.__dict__)
@@ -82,3 +96,25 @@ def me(
         raise HTTPException(status_code=401, detail="Некорректный access token.")
     result = facade.query(GetMeQuery(account_id=account_id))
     return MeResponse(**result.__dict__)
+
+
+@router.get("/sessions", response_model=SessionListResponse)
+def sessions(
+    authorization: str | None = Header(default=None),
+    facade=Depends(get_facade),
+    token_issuer: TokenIssuer = Depends(get_token_issuer),
+) -> SessionListResponse:
+    """Возвращает список сессий текущего пользователя."""
+
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Требуется Bearer токен.")
+    access = authorization.removeprefix("Bearer ").strip()
+    claims = token_issuer.decode_access(access)
+    account_id = str(claims.get("sub", ""))
+    if not account_id:
+        raise HTTPException(status_code=401, detail="Некорректный access token.")
+
+    results = facade.query(ListSessionsQuery(account_id=account_id))
+    return SessionListResponse(
+        items=[SessionItemResponse(**item.__dict__) for item in results]
+    )

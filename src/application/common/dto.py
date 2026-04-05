@@ -1,6 +1,7 @@
 """Общие DTO application слоя."""
 
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,3 +23,20 @@ class MeResult:
     email: str
     roles: list[str]
     status: str
+
+
+@dataclass(frozen=True, slots=True)
+class SessionInfoResult:
+    """Информация о пользовательской сессии."""
+
+    session_id: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    ip: str | None
+    user_agent_raw: str | None
+    device_type: str | None
+    os_name: str | None
+    os_version: str | None
+    browser_name: str | None
+    browser_version: str | None
