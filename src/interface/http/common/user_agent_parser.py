@@ -1,4 +1,4 @@
-"""Упрощенный парсер User-Agent для сессионной аналитики."""
+"""Упрощенный парсер User-Agent для сессионной аналитики HTTP-слоя."""
 
 from __future__ import annotations
 
@@ -90,3 +90,4 @@ def parse_user_agent(user_agent: str | None) -> ParsedClientInfo:
         client_name=client_name,
         risk_level=risk_level,
     )
+

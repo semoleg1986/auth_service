@@ -9,7 +9,7 @@ from src.application.ports.token_issuer import TokenIssuer
 from src.application.session.commands.dto import LoginCommand, LogoutCommand, RegisterCommand
 from src.application.session.queries.dto import ListSessionsQuery
 from src.application.token.commands.dto import RefreshCommand
-from src.infrastructure.http.user_agent_parser import parse_user_agent
+from src.interface.http.common.user_agent_parser import parse_user_agent
 from src.interface.http.v1.schemas.auth import (
     LoginRequest,
     LogoutRequest,

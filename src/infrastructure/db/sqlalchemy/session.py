@@ -15,10 +15,10 @@ def get_database_url() -> str:
     return os.getenv("AUTH_DATABASE_URL", "sqlite:///./auth_service.db")
 
 
-def build_engine() -> Engine:
-    """Создает engine для текущего окружения."""
+def build_engine(url: str | None = None) -> Engine:
+    """Создает engine для указанного URL."""
 
-    url = get_database_url()
+    url = url or get_database_url()
     connect_args = {"check_same_thread": False} if url.startswith("sqlite") else {}
     return create_engine(url, future=True, pool_pre_ping=True, connect_args=connect_args)
 

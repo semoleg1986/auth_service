@@ -1,4 +1,4 @@
-from src.infrastructure.http.user_agent_parser import parse_user_agent
+from src.interface.http.common.user_agent_parser import parse_user_agent
 
 
 def test_parse_mobile_safari() -> None:
