@@ -49,7 +49,11 @@ def build_runtime() -> RuntimeContainer:
     clock = SystemClock()
     id_generator = UuidGenerator()
     password_hasher = Argon2PasswordHasher()
-    token_issuer = JwtEdDsaTokenIssuer()
+    token_issuer = JwtEdDsaTokenIssuer(
+        issuer=settings.jwt_issuer,
+        private_key_pem=settings.jwt_private_key_pem,
+        public_key_pem=settings.jwt_public_key_pem,
+    )
 
     repositories = None
     if settings.use_inmemory:
@@ -104,8 +108,8 @@ def build_runtime() -> RuntimeContainer:
             id_generator=id_generator,
             password_hasher=password_hasher,
             token_issuer=token_issuer,
-            access_ttl_seconds=3600,
-            refresh_ttl_seconds=60 * 60 * 24 * 30,
+            access_ttl_seconds=settings.jwt_access_ttl_seconds,
+            refresh_ttl_seconds=settings.jwt_refresh_ttl_seconds,
         ),
     )
     facade.register_command_handler(
@@ -115,8 +119,8 @@ def build_runtime() -> RuntimeContainer:
             clock=clock,
             id_generator=id_generator,
             token_issuer=token_issuer,
-            access_ttl_seconds=3600,
-            refresh_ttl_seconds=60 * 60 * 24 * 30,
+            access_ttl_seconds=settings.jwt_access_ttl_seconds,
+            refresh_ttl_seconds=settings.jwt_refresh_ttl_seconds,
         ),
     )
     facade.register_command_handler(LogoutCommand, LogoutHandler(uow=uow, clock=clock))

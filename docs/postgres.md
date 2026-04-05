@@ -43,6 +43,19 @@ export AUTH_AUTO_CREATE_SCHEMA=1
 - ORM и миграции: `SQLAlchemy + Alembic`
 - Источник URL: `AUTH_DATABASE_URL` (fallback: `DATABASE_URL`, затем `alembic.ini`)
 
+## 4.1 JWT конфигурация (контракт env)
+
+`auth_service` читает JWT параметры из окружения:
+
+- `AUTH_JWT_ISSUER` (по умолчанию `auth_service`)
+- `AUTH_JWT_ACCESS_TTL_SECONDS` (по умолчанию `3600`)
+- `AUTH_JWT_REFRESH_TTL_SECONDS` (по умолчанию `2592000`)
+- `AUTH_JWT_PRIVATE_KEY_PEM` (опционально)
+- `AUTH_JWT_PUBLIC_KEY_PEM` (опционально)
+
+Если `AUTH_JWT_PRIVATE_KEY_PEM` не задан, сервис сгенерирует runtime-ключи.  
+Для production рекомендуется всегда задавать стабильную пару ключей через env.
+
 ## 5. Интеграционные тесты (Postgres)
 
 Перед запуском создайте тестовую БД:
