@@ -16,6 +16,8 @@ class ParsedClientInfo:
     os_version: str | None
     browser_name: str | None
     browser_version: str | None
+    client_name: str | None
+    risk_level: str
 
 
 _BROWSER_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
@@ -39,13 +41,17 @@ def parse_user_agent(user_agent: str | None) -> ParsedClientInfo:
     """Парсит User-Agent в базовые аналитические признаки."""
 
     if not user_agent:
-        return ParsedClientInfo(None, None, None, None, None, None)
+        return ParsedClientInfo(
+            None, "unknown", None, None, None, None, None, "medium"
+        )
 
     ua = user_agent.strip()
     ua_l = ua.lower()
 
     device_type = "desktop"
-    if any(token in ua_l for token in ("iphone", "android", "mobile")):
+    if any(token in ua_l for token in ("bot", "spider", "crawler", "headless")):
+        device_type = "bot"
+    elif any(token in ua_l for token in ("iphone", "android", "mobile")):
         device_type = "mobile"
     elif any(token in ua_l for token in ("ipad", "tablet")):
         device_type = "tablet"
@@ -71,6 +77,9 @@ def parse_user_agent(user_agent: str | None) -> ParsedClientInfo:
         browser_version = m.group(1)
         break
 
+    client_name = browser_name
+    risk_level = "high" if device_type == "bot" else "medium"
+
     return ParsedClientInfo(
         user_agent_raw=ua,
         device_type=device_type,
@@ -78,4 +87,6 @@ def parse_user_agent(user_agent: str | None) -> ParsedClientInfo:
         os_version=os_version,
         browser_name=browser_name,
         browser_version=browser_version,
+        client_name=client_name,
+        risk_level=risk_level,
     )

@@ -51,13 +51,23 @@ def login(
         LoginCommand(
             email=str(payload.email),
             password=payload.password,
-            ip=payload.ip,
+            ip_address=payload.ip_address,
             user_agent_raw=parsed.user_agent_raw,
             device_type=payload.device_type or parsed.device_type,
             os_name=payload.os_name or parsed.os_name,
             os_version=payload.os_version or parsed.os_version,
             browser_name=payload.browser_name or parsed.browser_name,
             browser_version=payload.browser_version or parsed.browser_version,
+            client_name=payload.client_name or parsed.client_name,
+            country=payload.country,
+            city=payload.city,
+            auth_method=payload.auth_method,
+            mfa_used=payload.mfa_used,
+            is_trusted=payload.is_trusted,
+            risk_level=payload.risk_level or parsed.risk_level,
+            session_fingerprint=payload.session_fingerprint,
+            last_path=payload.last_path,
+            last_action=payload.last_action,
         )
     )
     return TokenPairResponse(**result.__dict__)

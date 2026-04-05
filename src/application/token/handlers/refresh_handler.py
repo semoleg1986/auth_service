@@ -69,6 +69,12 @@ class RefreshHandler:
             now=now,
         )
         session.attach_refresh_token(refresh_token_id=new_token_id, now=now)
+        session.mark_seen(
+            now=now,
+            path="/v1/auth/refresh",
+            action="refresh",
+            auth_method="refresh",
+        )
 
         pair = self._token_issuer.issue_pair(
             AccessTokenPayload(
