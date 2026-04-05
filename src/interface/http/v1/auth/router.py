@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
+
 from fastapi import APIRouter, Depends, Header, HTTPException
 
 from src.application.identity.queries.dto import GetMeQuery
@@ -70,7 +72,7 @@ def login(
             last_action=payload.last_action,
         )
     )
-    return TokenPairResponse(**result.__dict__)
+    return TokenPairResponse(**asdict(result))
 
 
 @router.post("/refresh", response_model=TokenPairResponse)
@@ -78,7 +80,7 @@ def refresh(payload: RefreshRequest, facade=Depends(get_facade)) -> TokenPairRes
     """Ротирует refresh token и выдает новую пару токенов."""
 
     result = facade.execute(RefreshCommand(refresh_token=payload.refresh_token))
-    return TokenPairResponse(**result.__dict__)
+    return TokenPairResponse(**asdict(result))
 
 
 @router.post("/logout", status_code=204)
@@ -105,7 +107,7 @@ def me(
     if not account_id:
         raise HTTPException(status_code=401, detail="Некорректный access token.")
     result = facade.query(GetMeQuery(account_id=account_id))
-    return MeResponse(**result.__dict__)
+    return MeResponse(**asdict(result))
 
 
 @router.get("/sessions", response_model=SessionListResponse)
@@ -126,5 +128,5 @@ def sessions(
 
     results = facade.query(ListSessionsQuery(account_id=account_id))
     return SessionListResponse(
-        items=[SessionItemResponse(**item.__dict__) for item in results]
+        items=[SessionItemResponse(**asdict(item)) for item in results]
     )
