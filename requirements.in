@@ -1,5 +1,9 @@
 pytest
 
+fastapi
+uvicorn
+pydantic[email]
+
 black
 isort
 flake8

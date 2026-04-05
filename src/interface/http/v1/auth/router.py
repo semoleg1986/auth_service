@@ -1,0 +1,86 @@
+"""HTTP роуты auth v1."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, Header, HTTPException
+
+from src.application.identity.queries.dto import GetMeQuery
+from src.application.session.commands.dto import LoginCommand, LogoutCommand, RegisterCommand
+from src.application.token.commands.dto import RefreshCommand
+from src.application.ports.token_issuer import TokenIssuer
+from src.infrastructure.crypto.jwt_token_issuer_hs256 import JwtHs256TokenIssuer
+from src.interface.http.v1.schemas.auth import (
+    LoginRequest,
+    LogoutRequest,
+    MeResponse,
+    RefreshRequest,
+    RegisterRequest,
+    TokenPairResponse,
+)
+from src.interface.http.wiring import get_facade
+
+router = APIRouter(prefix="/v1/auth", tags=["auth"])
+
+
+def _token_issuer() -> TokenIssuer:
+    return JwtHs256TokenIssuer(secret="dev-auth-secret")
+
+
+@router.post("/register", response_model=dict)
+def register(payload: RegisterRequest, facade=Depends(get_facade)) -> dict:
+    """Регистрирует учетную запись."""
+
+    return facade.execute(
+        RegisterCommand(
+            email=str(payload.email),
+            password=payload.password,
+            default_role=payload.default_role,
+        )
+    )
+
+
+@router.post("/login", response_model=TokenPairResponse)
+def login(payload: LoginRequest, facade=Depends(get_facade)) -> TokenPairResponse:
+    """Выполняет login и выдает пару токенов."""
+
+    result = facade.execute(
+        LoginCommand(
+            email=str(payload.email),
+            password=payload.password,
+            ip=payload.ip,
+            user_agent=payload.user_agent,
+        )
+    )
+    return TokenPairResponse(**result.__dict__)
+
+
+@router.post("/refresh", response_model=TokenPairResponse)
+def refresh(payload: RefreshRequest, facade=Depends(get_facade)) -> TokenPairResponse:
+    """Ротирует refresh token и выдает новую пару токенов."""
+
+    result = facade.execute(RefreshCommand(refresh_token=payload.refresh_token))
+    return TokenPairResponse(**result.__dict__)
+
+
+@router.post("/logout", status_code=204)
+def logout(payload: LogoutRequest, facade=Depends(get_facade)) -> None:
+    """Завершает пользовательскую сессию."""
+
+    facade.execute(LogoutCommand(session_id=payload.session_id))
+    return None
+
+
+@router.get("/me", response_model=MeResponse)
+def me(authorization: str | None = Header(default=None), facade=Depends(get_facade)) -> MeResponse:
+    """Возвращает профиль текущего пользователя по access token."""
+
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Требуется Bearer токен.")
+    access = authorization.removeprefix("Bearer ").strip()
+    claims = _token_issuer().decode_access(access)
+    account_id = str(claims.get("sub", ""))
+    if not account_id:
+        raise HTTPException(status_code=401, detail="Некорректный access token.")
+    result = facade.query(GetMeQuery(account_id=account_id))
+    return MeResponse(**result.__dict__)
+
