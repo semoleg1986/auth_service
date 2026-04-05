@@ -3,6 +3,7 @@ pytest
 fastapi
 uvicorn
 pydantic[email]
+email-validator
 pyjwt
 cryptography
 argon2-cffi
