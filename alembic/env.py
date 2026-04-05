@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from logging.config import fileConfig
+import os
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -18,8 +19,18 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+def _resolve_database_url() -> str:
+    """Возвращает URL БД для миграций."""
+
+    return (
+        os.getenv("AUTH_DATABASE_URL")
+        or os.getenv("DATABASE_URL")
+        or config.get_main_option("sqlalchemy.url")
+    )
+
+
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
+    url = _resolve_database_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -32,6 +43,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    config.set_main_option("sqlalchemy.url", _resolve_database_url())
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

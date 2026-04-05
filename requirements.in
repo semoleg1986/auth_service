@@ -8,6 +8,7 @@ cryptography
 argon2-cffi
 sqlalchemy
 alembic
+psycopg[binary]
 
 black
 isort
