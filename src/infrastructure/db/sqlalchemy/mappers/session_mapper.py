@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from src.domain.session.auth_session.entity import AuthSession
-from src.domain.shared.statuses import SessionStatus
+from src.domain.shared.statuses import AuthMethod, DeviceType, RiskLevel, SessionStatus
 from src.infrastructure.db.sqlalchemy.models import AuthSessionModel
 
 
@@ -60,7 +60,7 @@ def to_entity(model: AuthSessionModel) -> AuthSession:
         status=SessionStatus(model.status),
         ip_address=model.ip_address,
         user_agent_raw=model.user_agent_raw,
-        device_type=model.device_type,
+        device_type=DeviceType(model.device_type),
         os_name=model.os_name,
         os_version=model.os_version,
         browser_name=model.browser_name,
@@ -68,10 +68,10 @@ def to_entity(model: AuthSessionModel) -> AuthSession:
         client_name=model.client_name,
         country=model.country,
         city=model.city,
-        auth_method=model.auth_method,
+        auth_method=AuthMethod(model.auth_method),
         mfa_used=model.mfa_used,
         is_trusted=model.is_trusted,
-        risk_level=model.risk_level,
+        risk_level=RiskLevel(model.risk_level),
         session_fingerprint=model.session_fingerprint,
         request_count=model.request_count,
         last_path=model.last_path,

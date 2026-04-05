@@ -42,3 +42,19 @@ export AUTH_AUTO_CREATE_SCHEMA=1
 - Драйвер PostgreSQL: `psycopg[binary]`
 - ORM и миграции: `SQLAlchemy + Alembic`
 - Источник URL: `AUTH_DATABASE_URL` (fallback: `DATABASE_URL`, затем `alembic.ini`)
+
+## 5. Интеграционные тесты (Postgres)
+
+Перед запуском создайте тестовую БД:
+
+```bash
+docker exec curs_postgres psql -U postgres -d postgres -c "CREATE DATABASE auth_service_test;"
+```
+
+Запуск интеграционных тестов:
+
+```bash
+AUTH_DATABASE_URL='postgresql+psycopg://postgres:postgres@localhost:5432/auth_service_test' make test-integration
+```
+
+Если Postgres недоступен, integration tests будут помечены как `skipped`.

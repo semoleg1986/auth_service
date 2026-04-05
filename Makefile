@@ -15,6 +15,12 @@ install: requirements ## Установить зависимости
 test: ## Запустить все тесты с подробным выводом
 	pytest -v
 
+test-integration: ## Запустить интеграционные тесты с Postgres
+	AUTH_USE_INMEMORY=0 \
+	AUTH_DATABASE_URL="$${AUTH_DATABASE_URL:-postgresql+psycopg://postgres:postgres@localhost:5432/auth_service_test}" \
+	PYTHONPATH=. \
+	pytest -v -m integration tests/integration
+
 migrate-up: ## Применить миграции Alembic до head
 	alembic upgrade head
 
