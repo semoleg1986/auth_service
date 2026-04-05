@@ -10,6 +10,8 @@ dist/
 build/
 .pytest_cache/
 *.sqlite3
+*.db
+auth_service.db
 
 # IDE and OS
 .idea/

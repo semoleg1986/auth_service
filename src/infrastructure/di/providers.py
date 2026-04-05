@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 
 from src.application.facade.application_facade import ApplicationFacade
 from src.application.identity.handlers.get_me_handler import GetMeHandler
@@ -25,6 +26,9 @@ from src.infrastructure.db.inmemory.repositories import (
     InMemorySessionRepository,
 )
 from src.infrastructure.db.inmemory.uow import InMemoryRepositoryProvider, InMemoryUnitOfWork
+from src.infrastructure.db.sqlalchemy.base import Base
+from src.infrastructure.db.sqlalchemy.session import build_engine, build_session_factory
+from src.infrastructure.db.sqlalchemy.uow.sqlalchemy_uow import SqlalchemyUnitOfWork
 from src.infrastructure.id.uuid_generator import UuidGenerator
 from src.domain.identity.account.entity import Account
 from src.domain.shared.value_objects import Email, PasswordHash, Role
@@ -46,12 +50,21 @@ def build_runtime() -> RuntimeContainer:
     password_hasher = Argon2PasswordHasher()
     token_issuer = JwtEdDsaTokenIssuer()
 
-    repositories = InMemoryRepositoryProvider(
-        accounts=InMemoryAccountRepository(),
-        sessions=InMemorySessionRepository(),
-        refresh_tokens=InMemoryRefreshTokenRepository(),
-    )
-    uow = InMemoryUnitOfWork(repositories)
+    use_inmemory = os.getenv("AUTH_USE_INMEMORY", "0") == "1"
+    repositories = None
+    if use_inmemory:
+        repositories = InMemoryRepositoryProvider(
+            accounts=InMemoryAccountRepository(),
+            sessions=InMemorySessionRepository(),
+            refresh_tokens=InMemoryRefreshTokenRepository(),
+        )
+        uow = InMemoryUnitOfWork(repositories)
+    else:
+        engine = build_engine()
+        if os.getenv("AUTH_AUTO_CREATE_SCHEMA", "0") == "1":
+            Base.metadata.create_all(bind=engine)
+        session_factory = build_session_factory(engine)
+        uow = SqlalchemyUnitOfWork(session_factory)
 
     # Seed demo account for local development.
     now = clock.now()
@@ -63,7 +76,15 @@ def build_runtime() -> RuntimeContainer:
         default_role=Role("admin"),
         now=now,
     )
-    repositories.accounts.add(demo)
+    if use_inmemory:
+        assert repositories is not None
+        if repositories.accounts.get_by_email("admin@example.com") is None:
+            repositories.accounts.add(demo)
+    else:
+        existing = uow.repositories.accounts.get_by_email("admin@example.com")
+        if existing is None:
+            uow.repositories.accounts.add(demo)
+            uow.commit()
 
     facade = ApplicationFacade()
     facade.register_command_handler(
