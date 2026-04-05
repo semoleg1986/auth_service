@@ -8,8 +8,8 @@ from src.domain.identity.account.entity import Account
 from src.domain.shared.statuses import SessionStatus
 from src.domain.shared.value_objects import Email, PasswordHash, Role
 from src.infrastructure.clock.system_clock import SystemClock
-from src.infrastructure.crypto.jwt_token_issuer_hs256 import JwtHs256TokenIssuer
-from src.infrastructure.crypto.password_hasher_pbkdf2 import Pbkdf2PasswordHasher
+from src.infrastructure.crypto.jwt_token_issuer_eddsa import JwtEdDsaTokenIssuer
+from src.infrastructure.crypto.password_hasher_argon2 import Argon2PasswordHasher
 from src.infrastructure.db.inmemory.repositories import (
     InMemoryAccountRepository,
     InMemoryRefreshTokenRepository,
@@ -23,8 +23,8 @@ class _Ctx:
     def __init__(self) -> None:
         self.clock = SystemClock()
         self.id_generator = UuidGenerator()
-        self.password_hasher = Pbkdf2PasswordHasher()
-        self.token_issuer = JwtHs256TokenIssuer(secret="test-secret")
+        self.password_hasher = Argon2PasswordHasher()
+        self.token_issuer = JwtEdDsaTokenIssuer(issuer="auth_service_test")
         repos = InMemoryRepositoryProvider(
             accounts=InMemoryAccountRepository(),
             sessions=InMemorySessionRepository(),

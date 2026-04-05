@@ -5,10 +5,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Header, HTTPException
 
 from src.application.identity.queries.dto import GetMeQuery
+from src.application.ports.token_issuer import TokenIssuer
 from src.application.session.commands.dto import LoginCommand, LogoutCommand, RegisterCommand
 from src.application.token.commands.dto import RefreshCommand
-from src.application.ports.token_issuer import TokenIssuer
-from src.infrastructure.crypto.jwt_token_issuer_hs256 import JwtHs256TokenIssuer
 from src.interface.http.v1.schemas.auth import (
     LoginRequest,
     LogoutRequest,
@@ -17,13 +16,9 @@ from src.interface.http.v1.schemas.auth import (
     RegisterRequest,
     TokenPairResponse,
 )
-from src.interface.http.wiring import get_facade
+from src.interface.http.wiring import get_facade, get_token_issuer
 
 router = APIRouter(prefix="/v1/auth", tags=["auth"])
-
-
-def _token_issuer() -> TokenIssuer:
-    return JwtHs256TokenIssuer(secret="dev-auth-secret")
 
 
 @router.post("/register", response_model=dict)
@@ -71,16 +66,19 @@ def logout(payload: LogoutRequest, facade=Depends(get_facade)) -> None:
 
 
 @router.get("/me", response_model=MeResponse)
-def me(authorization: str | None = Header(default=None), facade=Depends(get_facade)) -> MeResponse:
+def me(
+    authorization: str | None = Header(default=None),
+    facade=Depends(get_facade),
+    token_issuer: TokenIssuer = Depends(get_token_issuer),
+) -> MeResponse:
     """Возвращает профиль текущего пользователя по access token."""
 
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Требуется Bearer токен.")
     access = authorization.removeprefix("Bearer ").strip()
-    claims = _token_issuer().decode_access(access)
+    claims = token_issuer.decode_access(access)
     account_id = str(claims.get("sub", ""))
     if not account_id:
         raise HTTPException(status_code=401, detail="Некорректный access token.")
     result = facade.query(GetMeQuery(account_id=account_id))
     return MeResponse(**result.__dict__)
-

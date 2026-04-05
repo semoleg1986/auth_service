@@ -1,16 +1,16 @@
 """Публичные auth роуты."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from src.infrastructure.crypto.jwt_token_issuer_hs256 import JwtHs256TokenIssuer
+from src.application.ports.token_issuer import TokenIssuer
 from src.interface.http.v1.schemas.auth import JwksResponse
+from src.interface.http.wiring import get_token_issuer
 
 router = APIRouter(tags=["public"])
 
 
 @router.get("/.well-known/jwks.json", response_model=JwksResponse)
-def jwks() -> JwksResponse:
+def jwks(token_issuer: TokenIssuer = Depends(get_token_issuer)) -> JwksResponse:
     """Публикует JWKS документ."""
 
-    issuer = JwtHs256TokenIssuer(secret="dev-auth-secret")
-    return JwksResponse(**issuer.jwks())
+    return JwksResponse(**token_issuer.jwks())

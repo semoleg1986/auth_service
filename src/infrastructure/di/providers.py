@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from src.application.facade.application_facade import ApplicationFacade
 from src.application.identity.handlers.get_me_handler import GetMeHandler
 from src.application.identity.queries.dto import GetMeQuery
@@ -12,8 +14,9 @@ from src.application.session.handlers.register_handler import RegisterHandler
 from src.application.token.commands.dto import RefreshCommand
 from src.application.token.handlers.refresh_handler import RefreshHandler
 from src.infrastructure.clock.system_clock import SystemClock
-from src.infrastructure.crypto.jwt_token_issuer_hs256 import JwtHs256TokenIssuer
-from src.infrastructure.crypto.password_hasher_pbkdf2 import Pbkdf2PasswordHasher
+from src.application.ports.token_issuer import TokenIssuer
+from src.infrastructure.crypto.jwt_token_issuer_eddsa import JwtEdDsaTokenIssuer
+from src.infrastructure.crypto.password_hasher_argon2 import Argon2PasswordHasher
 from src.infrastructure.db.inmemory.repositories import (
     InMemoryAccountRepository,
     InMemoryRefreshTokenRepository,
@@ -25,13 +28,21 @@ from src.domain.identity.account.entity import Account
 from src.domain.shared.value_objects import Email, PasswordHash, Role
 
 
-def build_application_facade() -> ApplicationFacade:
-    """Собирает фасад приложения с in-memory адаптерами."""
+@dataclass(frozen=True, slots=True)
+class RuntimeContainer:
+    """Контейнер runtime-зависимостей."""
+
+    facade: ApplicationFacade
+    token_issuer: TokenIssuer
+
+
+def build_runtime() -> RuntimeContainer:
+    """Собирает runtime с in-memory адаптерами."""
 
     clock = SystemClock()
     id_generator = UuidGenerator()
-    password_hasher = Pbkdf2PasswordHasher()
-    token_issuer = JwtHs256TokenIssuer(secret="dev-auth-secret")
+    password_hasher = Argon2PasswordHasher()
+    token_issuer = JwtEdDsaTokenIssuer()
 
     repositories = InMemoryRepositoryProvider(
         accounts=InMemoryAccountRepository(),
@@ -88,4 +99,10 @@ def build_application_facade() -> ApplicationFacade:
     facade.register_command_handler(LogoutCommand, LogoutHandler(uow=uow, clock=clock))
     facade.register_query_handler(GetMeQuery, GetMeHandler(uow=uow))
 
-    return facade
+    return RuntimeContainer(facade=facade, token_issuer=token_issuer)
+
+
+def build_application_facade() -> ApplicationFacade:
+    """Совместимый конструктор фасада приложения."""
+
+    return build_runtime().facade
