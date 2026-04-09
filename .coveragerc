@@ -1,0 +1,15 @@
+[run]
+omit =
+    */__init__.py
+    src/interface/http/main.py
+    src/application/ports/*
+    src/domain/*/*/events.py
+    src/domain/*/*/repository.py
+    src/infrastructure/messaging/noop_event_bus.py
+    src/infrastructure/db/sqlalchemy/*
+    src/infrastructure/di/composition.py
+    src/infrastructure/di/providers.py
+
+[report]
+skip_empty = True
+show_missing = True

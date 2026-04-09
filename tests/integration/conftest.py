@@ -18,6 +18,8 @@ def _database_url() -> str:
 def prepare_postgres_schema() -> None:
     os.environ["AUTH_USE_INMEMORY"] = "0"
     os.environ["AUTH_AUTO_CREATE_SCHEMA"] = "0"
+    os.environ.pop("AUTH_JWT_PRIVATE_KEY_PEM", None)
+    os.environ.pop("AUTH_JWT_PUBLIC_KEY_PEM", None)
     database_url = _database_url()
     os.environ["AUTH_DATABASE_URL"] = database_url
 
