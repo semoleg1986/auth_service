@@ -1,0 +1,17 @@
+.git
+.github
+.idea
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.env
+.env.local
+.env.*.local
+auth_service.db
+tests
+docs
