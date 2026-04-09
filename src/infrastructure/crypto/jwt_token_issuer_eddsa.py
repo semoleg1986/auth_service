@@ -28,10 +28,12 @@ class JwtEdDsaTokenIssuer:
         self,
         *,
         issuer: str = "auth_service",
+        audience: str = "platform_clients",
         private_key_pem: str | None = None,
         public_key_pem: str | None = None,
     ) -> None:
         self._issuer = issuer
+        self._audience = audience
         self._private_key, self._public_key = self._load_or_generate_keys(
             private_key_pem=private_key_pem,
             public_key_pem=public_key_pem,
@@ -46,6 +48,8 @@ class JwtEdDsaTokenIssuer:
         now_ts = int(payload.issued_at.timestamp())
         access_claims = {
             "iss": self._issuer,
+            "aud": self._audience,
+            "typ": "access",
             "sub": payload.sub,
             "jti": payload.jti,
             "roles": payload.roles,
@@ -54,6 +58,8 @@ class JwtEdDsaTokenIssuer:
         }
         refresh_claims_payload = {
             "iss": self._issuer,
+            "aud": self._audience,
+            "typ": "refresh",
             **refresh_claims,
             "iat": now_ts,
             "exp": int((datetime.now(UTC) + timedelta(days=30)).timestamp()),
@@ -65,18 +71,36 @@ class JwtEdDsaTokenIssuer:
 
     def decode_refresh(self, refresh_token: str) -> dict[str, str]:
         claims = self._decode(refresh_token)
+        if claims.get("typ") != "refresh":
+            raise AccessDeniedError("Некорректный тип токена для refresh операции.")
+
+        token_id = str(claims.get("token_id", ""))
+        account_id = str(claims.get("account_id", ""))
+        session_id = str(claims.get("session_id", ""))
+        if not token_id or not account_id or not session_id:
+            raise AccessDeniedError("В refresh token отсутствуют обязательные claims.")
+
         return {
-            "token_id": str(claims.get("token_id", "")),
-            "account_id": str(claims.get("account_id", "")),
-            "session_id": str(claims.get("session_id", "")),
+            "token_id": token_id,
+            "account_id": account_id,
+            "session_id": session_id,
         }
 
     def decode_access(self, access_token: str) -> dict[str, str | list[str]]:
         claims = self._decode(access_token)
+        if claims.get("typ") != "access":
+            raise AccessDeniedError("Некорректный тип токена для access операции.")
+
+        subject = str(claims.get("sub", ""))
+        token_id = str(claims.get("jti", ""))
+        roles = list(claims.get("roles", []))
+        if not subject or not token_id or not roles:
+            raise AccessDeniedError("В access token отсутствуют обязательные claims.")
+
         return {
-            "sub": str(claims.get("sub", "")),
-            "jti": str(claims.get("jti", "")),
-            "roles": list(claims.get("roles", [])),
+            "sub": subject,
+            "jti": token_id,
+            "roles": roles,
         }
 
     def jwks(self) -> dict:
@@ -115,7 +139,8 @@ class JwtEdDsaTokenIssuer:
                 self._public_key,
                 algorithms=["EdDSA"],
                 issuer=self._issuer,
-                options={"require": ["iss", "iat", "exp"]},
+                audience=self._audience,
+                options={"require": ["iss", "aud", "iat", "exp", "typ"]},
             )
         except Exception as exc:
             raise AccessDeniedError("Некорректный токен.") from exc
@@ -154,4 +179,3 @@ class JwtEdDsaTokenIssuer:
 
         private_key = Ed25519PrivateKey.generate()
         return private_key, private_key.public_key()
-

@@ -51,6 +51,7 @@ def build_runtime() -> RuntimeContainer:
     password_hasher = Argon2PasswordHasher()
     token_issuer = JwtEdDsaTokenIssuer(
         issuer=settings.jwt_issuer,
+        audience=settings.jwt_audience,
         private_key_pem=settings.jwt_private_key_pem,
         public_key_pem=settings.jwt_public_key_pem,
     )

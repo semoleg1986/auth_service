@@ -14,6 +14,7 @@ class Settings:
     use_inmemory: bool
     auto_create_schema: bool
     jwt_issuer: str
+    jwt_audience: str
     jwt_private_key_pem: str | None
     jwt_public_key_pem: str | None
     jwt_access_ttl_seconds: int
@@ -28,6 +29,7 @@ class Settings:
             use_inmemory=os.getenv("AUTH_USE_INMEMORY", "0") == "1",
             auto_create_schema=os.getenv("AUTH_AUTO_CREATE_SCHEMA", "0") == "1",
             jwt_issuer=os.getenv("AUTH_JWT_ISSUER", "auth_service"),
+            jwt_audience=os.getenv("AUTH_JWT_AUDIENCE", "platform_clients"),
             jwt_private_key_pem=os.getenv("AUTH_JWT_PRIVATE_KEY_PEM"),
             jwt_public_key_pem=os.getenv("AUTH_JWT_PUBLIC_KEY_PEM"),
             jwt_access_ttl_seconds=int(os.getenv("AUTH_JWT_ACCESS_TTL_SECONDS", "3600")),

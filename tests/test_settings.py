@@ -10,6 +10,7 @@ def test_settings_read_jwt_contract_from_env() -> None:
     os.environ["AUTH_USE_INMEMORY"] = "0"
     os.environ["AUTH_AUTO_CREATE_SCHEMA"] = "1"
     os.environ["AUTH_JWT_ISSUER"] = "auth_service_prod"
+    os.environ["AUTH_JWT_AUDIENCE"] = "platform_internal"
     os.environ["AUTH_JWT_PRIVATE_KEY_PEM"] = "PRIVATE_KEY_PEM"
     os.environ["AUTH_JWT_PUBLIC_KEY_PEM"] = "PUBLIC_KEY_PEM"
     os.environ["AUTH_JWT_ACCESS_TTL_SECONDS"] = "900"
@@ -21,6 +22,7 @@ def test_settings_read_jwt_contract_from_env() -> None:
     assert settings.use_inmemory is False
     assert settings.auto_create_schema is True
     assert settings.jwt_issuer == "auth_service_prod"
+    assert settings.jwt_audience == "platform_internal"
     assert settings.jwt_private_key_pem == "PRIVATE_KEY_PEM"
     assert settings.jwt_public_key_pem == "PUBLIC_KEY_PEM"
     assert settings.jwt_access_ttl_seconds == 900
