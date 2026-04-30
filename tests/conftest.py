@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
+
+from src.interface.http.common.rate_limit import reset_rate_limiter
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -26,3 +28,4 @@ def force_inmemory_for_non_integration(request: pytest.FixtureRequest) -> None:
     # Тесты не должны зависеть от внешних PEM ключей окружения.
     os.environ.pop("AUTH_JWT_PRIVATE_KEY_PEM", None)
     os.environ.pop("AUTH_JWT_PUBLIC_KEY_PEM", None)
+    reset_rate_limiter()

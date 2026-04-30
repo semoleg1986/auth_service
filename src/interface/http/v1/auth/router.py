@@ -4,13 +4,22 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 from src.application.identity.queries.dto import GetMeQuery
 from src.application.ports.token_issuer import TokenIssuer
-from src.application.session.commands.dto import LoginCommand, LogoutCommand, RegisterCommand
+from src.application.session.commands.dto import (
+    LoginCommand,
+    LogoutCommand,
+    RegisterCommand,
+)
 from src.application.session.queries.dto import ListSessionsQuery
 from src.application.token.commands.dto import RefreshCommand
+from src.interface.http.common.rate_limit import (
+    LOGIN_RATE_RULE,
+    REFRESH_RATE_RULE,
+    enforce_rate_limit,
+)
 from src.interface.http.common.user_agent_parser import parse_user_agent
 from src.interface.http.v1.schemas.auth import (
     LoginRequest,
@@ -43,10 +52,18 @@ def register(payload: RegisterRequest, facade=Depends(get_facade)) -> dict:
 @router.post("/login", response_model=TokenPairResponse)
 def login(
     payload: LoginRequest,
+    request: Request,
     facade=Depends(get_facade),
     user_agent_header: str | None = Header(default=None, alias="User-Agent"),
 ) -> TokenPairResponse:
     """Выполняет login и выдает пару токенов."""
+
+    client_host = request.client.host if request.client else "unknown"
+    enforce_rate_limit(
+        scope="auth_login",
+        key=f"{client_host}:{str(payload.email).lower()}",
+        rule=LOGIN_RATE_RULE,
+    )
 
     parsed = parse_user_agent(payload.user_agent_raw or user_agent_header)
     result = facade.execute(
@@ -76,8 +93,19 @@ def login(
 
 
 @router.post("/refresh", response_model=TokenPairResponse)
-def refresh(payload: RefreshRequest, facade=Depends(get_facade)) -> TokenPairResponse:
+def refresh(
+    payload: RefreshRequest,
+    request: Request,
+    facade=Depends(get_facade),
+) -> TokenPairResponse:
     """Ротирует refresh token и выдает новую пару токенов."""
+
+    client_host = request.client.host if request.client else "unknown"
+    enforce_rate_limit(
+        scope="auth_refresh",
+        key=client_host,
+        rule=REFRESH_RATE_RULE,
+    )
 
     result = facade.execute(RefreshCommand(refresh_token=payload.refresh_token))
     return TokenPairResponse(**asdict(result))
