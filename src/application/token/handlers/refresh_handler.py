@@ -83,6 +83,7 @@ class RefreshHandler:
                 roles=sorted(role.value for role in account.roles),
                 issued_at=now,
                 expires_at=now + timedelta(seconds=self._access_ttl_seconds),
+                user_id=account.user_id,
             ),
             refresh_claims={
                 "token_id": new_token_id,

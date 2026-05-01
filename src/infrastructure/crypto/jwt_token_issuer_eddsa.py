@@ -56,6 +56,8 @@ class JwtEdDsaTokenIssuer:
             "iat": now_ts,
             "exp": int(payload.expires_at.timestamp()),
         }
+        if payload.user_id:
+            access_claims["user_id"] = payload.user_id
         refresh_claims_payload = {
             "iss": self._issuer,
             "aud": self._audience,
@@ -101,6 +103,7 @@ class JwtEdDsaTokenIssuer:
             "sub": subject,
             "jti": token_id,
             "roles": roles,
+            "user_id": str(claims.get("user_id", "")).strip(),
         }
 
     def jwks(self) -> dict:
@@ -169,7 +172,9 @@ class JwtEdDsaTokenIssuer:
             return private_key, private_key.public_key()
 
         if public_key_pem:
-            public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
+            public_key = serialization.load_pem_public_key(
+                public_key_pem.encode("utf-8")
+            )
             if not isinstance(public_key, Ed25519PublicKey):
                 raise ValueError("Ожидался Ed25519 public key.")
             # Только с public key нельзя подписывать access/refresh, поэтому генерируем runtime pair.

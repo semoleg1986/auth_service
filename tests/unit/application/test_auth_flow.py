@@ -1,6 +1,10 @@
-from src.application.session.commands.dto import LoginCommand, LogoutCommand, RegisterCommand
-from src.application.session.handlers.login_handler import LoginHandler
+from src.application.session.commands.dto import (
+    LoginCommand,
+    LogoutCommand,
+    RegisterCommand,
+)
 from src.application.session.handlers.list_sessions_handler import ListSessionsHandler
+from src.application.session.handlers.login_handler import LoginHandler
 from src.application.session.handlers.logout_handler import LogoutHandler
 from src.application.session.handlers.register_handler import RegisterHandler
 from src.application.session.queries.dto import ListSessionsQuery
@@ -17,7 +21,10 @@ from src.infrastructure.db.inmemory.repositories import (
     InMemoryRefreshTokenRepository,
     InMemorySessionRepository,
 )
-from src.infrastructure.db.inmemory.uow import InMemoryRepositoryProvider, InMemoryUnitOfWork
+from src.infrastructure.db.inmemory.uow import (
+    InMemoryRepositoryProvider,
+    InMemoryUnitOfWork,
+)
 from src.infrastructure.id.uuid_generator import UuidGenerator
 
 
@@ -60,12 +67,11 @@ def test_register_and_login_and_me_flow() -> None:
             default_role="parent",
         )
     )
-    tokens = login(
-        LoginCommand(email="parent@example.com", password="strong-pass-123")
-    )
+    tokens = login(LoginCommand(email="parent@example.com", password="strong-pass-123"))
 
     claims = ctx.token_issuer.decode_access(tokens.access_token)
     assert claims["sub"] == created["account_id"]
+    assert claims["user_id"] == created["user_id"]
 
 
 def test_refresh_rotates_token_and_logout_closes_session() -> None:
@@ -129,6 +135,8 @@ def test_refresh_rotates_token_and_logout_closes_session() -> None:
     assert sessions_before_logout[0].browser_name == "chrome"
 
     logout(LogoutCommand(session_id=second_refresh_claims["session_id"]))
-    session = ctx.uow.repositories.sessions.get_by_id(second_refresh_claims["session_id"])
+    session = ctx.uow.repositories.sessions.get_by_id(
+        second_refresh_claims["session_id"]
+    )
     assert session is not None
     assert session.status == SessionStatus.CLOSED

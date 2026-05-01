@@ -23,6 +23,7 @@ def test_access_and_refresh_tokens_follow_contract() -> None:
             roles=["student"],
             issued_at=now,
             expires_at=now + timedelta(minutes=10),
+            user_id="user-1",
         ),
         refresh_claims={
             "token_id": "rt-1",
@@ -33,6 +34,7 @@ def test_access_and_refresh_tokens_follow_contract() -> None:
 
     access_claims = issuer.decode_access(tokens.access_token)
     assert access_claims["sub"] == "acc-1"
+    assert access_claims["user_id"] == "user-1"
     assert access_claims["jti"] == "jti-1"
     assert access_claims["roles"] == ["student"]
 

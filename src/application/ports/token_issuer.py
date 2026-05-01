@@ -14,6 +14,7 @@ class AccessTokenPayload:
     roles: list[str]
     issued_at: datetime
     expires_at: datetime
+    user_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,7 +28,9 @@ class TokenPair:
 class TokenIssuer(Protocol):
     """Контракт токен-провайдера."""
 
-    def issue_pair(self, payload: AccessTokenPayload, refresh_claims: dict[str, str]) -> TokenPair:
+    def issue_pair(
+        self, payload: AccessTokenPayload, refresh_claims: dict[str, str]
+    ) -> TokenPair:
         """Выпускает пару access/refresh токенов."""
 
     def decode_refresh(self, refresh_token: str) -> dict[str, str]:

@@ -40,12 +40,16 @@ class LoginHandler:
         self._refresh_ttl_seconds = refresh_ttl_seconds
 
     def __call__(self, command: LoginCommand) -> TokenResult:
-        account = self._uow.repositories.accounts.get_by_email(command.email.strip().lower())
+        account = self._uow.repositories.accounts.get_by_email(
+            command.email.strip().lower()
+        )
         if account is None:
             raise AccessDeniedError("Неверный email или пароль.")
         if account.status != AccountStatus.ACTIVE:
             raise AccessDeniedError("Аккаунт недоступен для входа.")
-        if not self._password_hasher.verify(command.password, account.password_hash.value):
+        if not self._password_hasher.verify(
+            command.password, account.password_hash.value
+        ):
             raise AccessDeniedError("Неверный email или пароль.")
 
         now = self._clock.now()
@@ -93,6 +97,7 @@ class LoginHandler:
                 roles=sorted(role.value for role in account.roles),
                 issued_at=now,
                 expires_at=now + timedelta(seconds=self._access_ttl_seconds),
+                user_id=account.user_id,
             ),
             refresh_claims={
                 "token_id": refresh_token_id,
