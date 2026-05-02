@@ -11,6 +11,8 @@ from dataclasses import dataclass
 
 from fastapi import HTTPException
 
+from src.interface.http.observability import increment_counter
+
 
 @dataclass(frozen=True, slots=True)
 class RateLimitRule:
@@ -77,6 +79,11 @@ def enforce_rate_limit(*, scope: str, key: str, rule: RateLimitRule) -> None:
 
     if _limiter.allow(scope=scope, key=key, rule=rule):
         return
+    increment_counter(
+        "auth_rate_limit_hits_total",
+        "Total auth endpoint rate-limit hits.",
+        scope=scope,
+    )
     raise HTTPException(
         status_code=429, detail="Слишком много запросов, попробуйте позже."
     )

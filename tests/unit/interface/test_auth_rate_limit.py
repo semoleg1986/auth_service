@@ -5,7 +5,8 @@ import os
 from fastapi.testclient import TestClient
 
 from src.interface.http.app import create_app
-from src.interface.http.common.rate_limit import RateLimitRule
+from src.interface.http.common.rate_limit import RateLimitRule, reset_rate_limiter
+from src.interface.http.observability import reset_metrics
 from src.interface.http.v1.auth import router as auth_router
 from src.interface.http.wiring import get_runtime
 
@@ -14,6 +15,8 @@ def _client() -> TestClient:
     os.environ["AUTH_USE_INMEMORY"] = "1"
     os.environ["AUTH_AUTO_CREATE_SCHEMA"] = "0"
     os.environ.pop("AUTH_DATABASE_URL", None)
+    reset_metrics()
+    reset_rate_limiter()
     get_runtime.cache_clear()
     return TestClient(create_app())
 
@@ -35,6 +38,10 @@ def test_login_rate_limit_returns_429(monkeypatch) -> None:
     second = client.post("/v1/auth/login", json=payload)
     assert second.status_code == 429
     assert "Слишком много запросов" in second.text
+
+    metrics = client.get("/metrics")
+    assert metrics.status_code == 200
+    assert 'auth_rate_limit_hits_total{scope="auth_login"} 1' in metrics.text
 
 
 def test_refresh_rate_limit_returns_429(monkeypatch) -> None:
@@ -62,3 +69,7 @@ def test_refresh_rate_limit_returns_429(monkeypatch) -> None:
     second = client.post("/v1/auth/refresh", json={"refresh_token": refresh_token})
     assert second.status_code == 429
     assert "Слишком много запросов" in second.text
+
+    metrics = client.get("/metrics")
+    assert metrics.status_code == 200
+    assert 'auth_rate_limit_hits_total{scope="auth_refresh"} 1' in metrics.text

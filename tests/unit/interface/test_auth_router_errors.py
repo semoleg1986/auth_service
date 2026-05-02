@@ -5,6 +5,8 @@ import os
 from fastapi.testclient import TestClient
 
 from src.interface.http.app import create_app
+from src.interface.http.common.rate_limit import reset_rate_limiter
+from src.interface.http.observability import reset_metrics
 from src.interface.http.wiring import get_runtime
 
 
@@ -12,6 +14,8 @@ def _client() -> TestClient:
     os.environ["AUTH_USE_INMEMORY"] = "1"
     os.environ["AUTH_AUTO_CREATE_SCHEMA"] = "0"
     os.environ.pop("AUTH_DATABASE_URL", None)
+    reset_metrics()
+    reset_rate_limiter()
     get_runtime.cache_clear()
     return TestClient(create_app())
 
@@ -31,13 +35,21 @@ def test_logout_and_refresh_routes_operate() -> None:
 
     register = client.post(
         "/v1/auth/register",
-        json={"email": "r1@example.com", "password": "pass-12345", "default_role": "parent"},
+        json={
+            "email": "r1@example.com",
+            "password": "pass-12345",
+            "default_role": "parent",
+        },
     )
     assert register.status_code == 200
 
     login = client.post(
         "/v1/auth/login",
-        json={"email": "r1@example.com", "password": "pass-12345", "session_fingerprint": "fp-1"},
+        json={
+            "email": "r1@example.com",
+            "password": "pass-12345",
+            "session_fingerprint": "fp-1",
+        },
     )
     assert login.status_code == 200, login.text
     tokens = login.json()
@@ -45,10 +57,30 @@ def test_logout_and_refresh_routes_operate() -> None:
     me_bad = client.get("/v1/auth/me", headers={"Authorization": "Bearer invalid"})
     assert me_bad.status_code == 403
 
-    refreshed = client.post("/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
+    refreshed = client.post(
+        "/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
+    )
     assert refreshed.status_code == 200
 
     session_id = refreshed.json()["refresh_token"]
     # session_id напрямую API не возвращает, поэтому проверяем только контракт logout-валидации.
     bad_logout = client.post("/v1/auth/logout", json={"session_id": "missing"})
     assert bad_logout.status_code in {204, 404}
+
+
+def test_login_failure_increments_metric() -> None:
+    client = _client()
+
+    response = client.post(
+        "/v1/auth/login",
+        json={
+            "email": "admin@example.com",
+            "password": "wrong-password",
+            "session_fingerprint": "fp-fail",
+        },
+    )
+    assert response.status_code == 403, response.text
+
+    metrics = client.get("/metrics")
+    assert metrics.status_code == 200
+    assert 'auth_login_fail_total{reason="access_denied"} 1' in metrics.text
