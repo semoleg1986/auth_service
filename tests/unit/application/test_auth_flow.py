@@ -45,13 +45,13 @@ class _Ctx:
 def test_register_and_login_and_me_flow() -> None:
     ctx = _Ctx()
     register = RegisterHandler(
-        uow=ctx.uow,
+        uow_factory=lambda: ctx.uow,
         clock=ctx.clock,
         id_generator=ctx.id_generator,
         password_hasher=ctx.password_hasher,
     )
     login = LoginHandler(
-        uow=ctx.uow,
+        uow_factory=lambda: ctx.uow,
         clock=ctx.clock,
         id_generator=ctx.id_generator,
         password_hasher=ctx.password_hasher,
@@ -88,7 +88,7 @@ def test_refresh_rotates_token_and_logout_closes_session() -> None:
     ctx.uow.repositories.accounts.add(account)
 
     login = LoginHandler(
-        uow=ctx.uow,
+        uow_factory=lambda: ctx.uow,
         clock=ctx.clock,
         id_generator=ctx.id_generator,
         password_hasher=ctx.password_hasher,
@@ -97,15 +97,15 @@ def test_refresh_rotates_token_and_logout_closes_session() -> None:
         refresh_ttl_seconds=60 * 60 * 24,
     )
     refresh = RefreshHandler(
-        uow=ctx.uow,
+        uow_factory=lambda: ctx.uow,
         clock=ctx.clock,
         id_generator=ctx.id_generator,
         token_issuer=ctx.token_issuer,
         access_ttl_seconds=3600,
         refresh_ttl_seconds=60 * 60 * 24,
     )
-    logout = LogoutHandler(uow=ctx.uow, clock=ctx.clock)
-    list_sessions = ListSessionsHandler(uow=ctx.uow)
+    logout = LogoutHandler(uow_factory=lambda: ctx.uow, clock=ctx.clock)
+    list_sessions = ListSessionsHandler(uow_factory=lambda: ctx.uow)
 
     first = login(
         LoginCommand(

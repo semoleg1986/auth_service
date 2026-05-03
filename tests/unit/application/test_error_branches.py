@@ -25,7 +25,10 @@ from src.infrastructure.db.inmemory.repositories import (
     InMemoryRefreshTokenRepository,
     InMemorySessionRepository,
 )
-from src.infrastructure.db.inmemory.uow import InMemoryRepositoryProvider, InMemoryUnitOfWork
+from src.infrastructure.db.inmemory.uow import (
+    InMemoryRepositoryProvider,
+    InMemoryUnitOfWork,
+)
 from src.infrastructure.id.uuid_generator import UuidGenerator
 
 
@@ -43,7 +46,9 @@ class _Ctx:
         self.uow = InMemoryUnitOfWork(repos)
 
 
-def _create_account(ctx: _Ctx, *, status: AccountStatus = AccountStatus.ACTIVE) -> Account:
+def _create_account(
+    ctx: _Ctx, *, status: AccountStatus = AccountStatus.ACTIVE
+) -> Account:
     now = datetime(2026, 4, 9, tzinfo=UTC)
     account = Account.register(
         account_id=ctx.id_generator.new(),
@@ -61,7 +66,7 @@ def _create_account(ctx: _Ctx, *, status: AccountStatus = AccountStatus.ACTIVE) 
 
 def test_get_me_raises_not_found_for_unknown_account() -> None:
     ctx = _Ctx()
-    handler = GetMeHandler(uow=ctx.uow)
+    handler = GetMeHandler(uow_factory=lambda: ctx.uow)
 
     with pytest.raises(NotFoundError):
         handler(GetMeQuery(account_id="missing"))
@@ -70,7 +75,7 @@ def test_get_me_raises_not_found_for_unknown_account() -> None:
 def test_login_rejects_missing_account_or_wrong_password_or_blocked() -> None:
     ctx = _Ctx()
     handler = LoginHandler(
-        uow=ctx.uow,
+        uow_factory=lambda: ctx.uow,
         clock=ctx.clock,
         id_generator=ctx.id_generator,
         password_hasher=ctx.password_hasher,
@@ -89,7 +94,7 @@ def test_login_rejects_missing_account_or_wrong_password_or_blocked() -> None:
     ctx_blocked = _Ctx()
     _create_account(ctx_blocked, status=AccountStatus.BLOCKED)
     blocked_handler = LoginHandler(
-        uow=ctx_blocked.uow,
+        uow_factory=lambda: ctx_blocked.uow,
         clock=ctx_blocked.clock,
         id_generator=ctx_blocked.id_generator,
         password_hasher=ctx_blocked.password_hasher,
@@ -104,7 +109,7 @@ def test_login_rejects_missing_account_or_wrong_password_or_blocked() -> None:
 def test_refresh_rejects_missing_claims_and_missing_entities() -> None:
     ctx = _Ctx()
     refresh = RefreshHandler(
-        uow=ctx.uow,
+        uow_factory=lambda: ctx.uow,
         clock=ctx.clock,
         id_generator=ctx.id_generator,
         token_issuer=ctx.token_issuer,
@@ -113,27 +118,41 @@ def test_refresh_rejects_missing_claims_and_missing_entities() -> None:
     )
 
     bogus = ctx.token_issuer.issue_pair(
-        payload=type("P", (), {
-            "sub": "acc",
-            "jti": "jti",
-            "roles": ["parent"],
-            "issued_at": datetime.now(UTC),
-            "expires_at": datetime.now(UTC),
-        })(),
+        payload=type(
+            "P",
+            (),
+            {
+                "sub": "acc",
+                "jti": "jti",
+                "roles": ["parent"],
+                "issued_at": datetime.now(UTC),
+                "expires_at": datetime.now(UTC),
+                "user_id": None,
+            },
+        )(),
         refresh_claims={"account_id": "acc", "session_id": "sess"},
     )
     with pytest.raises(AccessDeniedError):
         refresh(RefreshCommand(refresh_token=bogus.refresh_token))
 
     proper = ctx.token_issuer.issue_pair(
-        payload=type("P", (), {
-            "sub": "acc",
-            "jti": "jti2",
-            "roles": ["parent"],
-            "issued_at": datetime.now(UTC),
-            "expires_at": datetime.now(UTC),
-        })(),
-        refresh_claims={"token_id": "missing-rt", "account_id": "acc", "session_id": "sess"},
+        payload=type(
+            "P",
+            (),
+            {
+                "sub": "acc",
+                "jti": "jti2",
+                "roles": ["parent"],
+                "issued_at": datetime.now(UTC),
+                "expires_at": datetime.now(UTC),
+                "user_id": None,
+            },
+        )(),
+        refresh_claims={
+            "token_id": "missing-rt",
+            "account_id": "acc",
+            "session_id": "sess",
+        },
     )
     with pytest.raises(NotFoundError):
         refresh(RefreshCommand(refresh_token=proper.refresh_token))
@@ -143,7 +162,7 @@ def test_refresh_rejects_when_account_missing_or_blocked_or_session_missing() ->
     ctx = _Ctx()
     now = datetime.now(UTC)
     refresh = RefreshHandler(
-        uow=ctx.uow,
+        uow_factory=lambda: ctx.uow,
         clock=ctx.clock,
         id_generator=ctx.id_generator,
         token_issuer=ctx.token_issuer,

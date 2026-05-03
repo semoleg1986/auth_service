@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Protocol
 
 from src.application.ports.repositories import RepositoryProvider
@@ -19,3 +20,6 @@ class UnitOfWork(Protocol):
 
     def rollback(self) -> None:
         """Откатывает транзакцию."""
+
+
+UnitOfWorkFactory = Callable[[], UnitOfWork]

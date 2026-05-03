@@ -15,7 +15,10 @@ from src.infrastructure.db.inmemory.repositories import (
     InMemoryRefreshTokenRepository,
     InMemorySessionRepository,
 )
-from src.infrastructure.db.inmemory.uow import InMemoryRepositoryProvider, InMemoryUnitOfWork
+from src.infrastructure.db.inmemory.uow import (
+    InMemoryRepositoryProvider,
+    InMemoryUnitOfWork,
+)
 from src.infrastructure.id.uuid_generator import UuidGenerator
 
 
@@ -26,7 +29,7 @@ def _register_handler() -> RegisterHandler:
         refresh_tokens=InMemoryRefreshTokenRepository(),
     )
     return RegisterHandler(
-        uow=InMemoryUnitOfWork(repos),
+        uow_factory=lambda: InMemoryUnitOfWork(repos),
         clock=SystemClock(),
         id_generator=UuidGenerator(),
         password_hasher=Argon2PasswordHasher(),
@@ -35,7 +38,9 @@ def _register_handler() -> RegisterHandler:
 
 def test_register_rejects_duplicate_email() -> None:
     handler = _register_handler()
-    cmd = RegisterCommand(email="dup@example.com", password="pass-12345", default_role="parent")
+    cmd = RegisterCommand(
+        email="dup@example.com", password="pass-12345", default_role="parent"
+    )
 
     handler(cmd)
     with pytest.raises(InvariantViolationError):
