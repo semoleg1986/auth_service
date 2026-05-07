@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -26,6 +27,26 @@ _CUSTOM_COUNTER_LABELS: dict[str, tuple[str, ...]] = {}
 _CUSTOM_COUNTER_VALUES: dict[str, dict[tuple[str, ...], int]] = defaultdict(
     lambda: defaultdict(int)
 )
+
+
+def _apply_security_headers(response: Response) -> None:
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+
+
+def _metrics_access_allowed(request: Request) -> bool:
+    expected_token = os.getenv("AUTH_METRICS_TOKEN")
+    if not expected_token:
+        return True
+
+    service_token = request.headers.get("X-Service-Token")
+    if service_token == expected_token:
+        return True
+
+    authorization = request.headers.get("Authorization", "")
+    return authorization == f"Bearer {expected_token}"
 
 
 def configure_http_logging() -> None:
@@ -86,6 +107,7 @@ class _StructuredHttpLogMiddleware(BaseHTTPMiddleware):
             route = request.scope.get("route")
             path = getattr(route, "path", request.url.path)
             response.headers["X-Request-ID"] = request_id
+            _apply_security_headers(response)
             return response
         finally:
             duration_seconds = time.perf_counter() - started_at
@@ -121,7 +143,9 @@ def install_observability(app: FastAPI) -> None:
     """Устанавливает middleware для request-id/metrics и structured logs."""
 
     @app.get("/metrics", include_in_schema=False)
-    async def metrics() -> PlainTextResponse:
+    async def metrics(request: Request) -> PlainTextResponse:
+        if not _metrics_access_allowed(request):
+            return PlainTextResponse("Unauthorized\n", status_code=401)
         lines = [
             "# HELP http_requests_total Total HTTP requests.",
             "# TYPE http_requests_total counter",
