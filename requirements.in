@@ -9,6 +9,7 @@ cryptography
 argon2-cffi
 sqlalchemy
 alembic
+mako>=1.3.12
 psycopg[binary]
 
 black
