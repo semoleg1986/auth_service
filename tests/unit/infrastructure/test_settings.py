@@ -6,7 +6,9 @@ from src.infrastructure.config.settings import Settings
 
 
 def test_settings_read_jwt_contract_from_env() -> None:
-    os.environ["AUTH_DATABASE_URL"] = "postgresql+psycopg://postgres:postgres@localhost:5432/auth_service"
+    os.environ["AUTH_DATABASE_URL"] = (
+        "postgresql+psycopg://postgres:postgres@localhost:5432/auth_service"
+    )
     os.environ["AUTH_USE_INMEMORY"] = "0"
     os.environ["AUTH_AUTO_CREATE_SCHEMA"] = "1"
     os.environ["AUTH_JWT_ISSUER"] = "auth_service_prod"
@@ -15,6 +17,9 @@ def test_settings_read_jwt_contract_from_env() -> None:
     os.environ["AUTH_JWT_PUBLIC_KEY_PEM"] = "PUBLIC_KEY_PEM"
     os.environ["AUTH_JWT_ACCESS_TTL_SECONDS"] = "900"
     os.environ["AUTH_JWT_REFRESH_TTL_SECONDS"] = "1209600"
+    os.environ["AUTH_USERS_SERVICE_BASE_URL"] = "http://users:8002"
+    os.environ["AUTH_USERS_SERVICE_TOKEN"] = "service-token"
+    os.environ["AUTH_USERS_SERVICE_TIMEOUT_SECONDS"] = "3.5"
 
     settings = Settings.from_env()
 
@@ -27,3 +32,6 @@ def test_settings_read_jwt_contract_from_env() -> None:
     assert settings.jwt_public_key_pem == "PUBLIC_KEY_PEM"
     assert settings.jwt_access_ttl_seconds == 900
     assert settings.jwt_refresh_ttl_seconds == 1209600
+    assert settings.users_service_base_url == "http://users:8002"
+    assert settings.users_service_token == "service-token"
+    assert settings.users_service_timeout_seconds == 3.5

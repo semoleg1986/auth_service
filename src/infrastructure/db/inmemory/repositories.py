@@ -15,10 +15,12 @@ class InMemoryAccountRepository:
 
     by_id: dict[str, Account] = field(default_factory=dict)
     by_email: dict[str, str] = field(default_factory=dict)
+    by_user_id: dict[str, str] = field(default_factory=dict)
 
     def add(self, account: Account) -> None:
         self.by_id[account.aggregate_id] = account
         self.by_email[account.email.value] = account.aggregate_id
+        self.by_user_id[account.user_id] = account.aggregate_id
 
     def save(self, account: Account) -> None:
         self.add(account)
@@ -28,6 +30,10 @@ class InMemoryAccountRepository:
 
     def get_by_email(self, email: str) -> Account | None:
         account_id = self.by_email.get(email.strip().lower())
+        return self.by_id.get(account_id) if account_id else None
+
+    def get_by_user_id(self, user_id: str) -> Account | None:
+        account_id = self.by_user_id.get(user_id.strip())
         return self.by_id.get(account_id) if account_id else None
 
 

@@ -9,9 +9,13 @@ from src.application.identity.handlers.get_me_handler import GetMeHandler
 from src.application.identity.queries.dto import GetMeQuery
 from src.application.ports.token_issuer import TokenIssuer
 from src.application.session.commands.dto import (
+    AcceptStudentInviteCommand,
     LoginCommand,
     LogoutCommand,
     RegisterCommand,
+)
+from src.application.session.handlers.accept_student_invite_handler import (
+    AcceptStudentInviteHandler,
 )
 from src.application.session.handlers.list_sessions_handler import ListSessionsHandler
 from src.application.session.handlers.login_handler import LoginHandler
@@ -39,6 +43,9 @@ from src.infrastructure.db.sqlalchemy.base import Base
 from src.infrastructure.db.sqlalchemy.session import build_engine, build_session_factory
 from src.infrastructure.db.sqlalchemy.uow.sqlalchemy_uow import SqlalchemyUnitOfWork
 from src.infrastructure.id.uuid_generator import UuidGenerator
+from src.infrastructure.users_service.student_invite_client import (
+    UsersServiceStudentInviteClient,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,6 +117,20 @@ def build_runtime() -> RuntimeContainer:
             clock=clock,
             id_generator=id_generator,
             password_hasher=password_hasher,
+        ),
+    )
+    facade.register_command_handler(
+        AcceptStudentInviteCommand,
+        AcceptStudentInviteHandler(
+            uow_factory=uow_factory,
+            clock=clock,
+            id_generator=id_generator,
+            password_hasher=password_hasher,
+            invite_consumer=UsersServiceStudentInviteClient(
+                base_url=settings.users_service_base_url,
+                service_token=settings.users_service_token,
+                timeout_seconds=settings.users_service_timeout_seconds,
+            ),
         ),
     )
     facade.register_command_handler(

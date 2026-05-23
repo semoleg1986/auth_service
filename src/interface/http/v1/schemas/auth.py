@@ -49,6 +49,21 @@ class RegisterRequest(BaseModel):
     default_role: str = "student"
 
 
+class AcceptStudentInviteRequest(BaseModel):
+    """Тело запроса принятия student invite."""
+
+    token: str = Field(min_length=16)
+    password: str = Field(min_length=8)
+
+
+class AcceptStudentInviteResponse(BaseModel):
+    """Ответ после принятия student invite."""
+
+    account_id: str
+    user_id: str
+    email: EmailStr
+
+
 class TokenPairResponse(BaseModel):
     """Ответ с парой токенов."""
 

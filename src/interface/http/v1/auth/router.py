@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from src.application.identity.queries.dto import GetMeQuery
 from src.application.ports.token_issuer import TokenIssuer
 from src.application.session.commands.dto import (
+    AcceptStudentInviteCommand,
     LoginCommand,
     LogoutCommand,
     RegisterCommand,
@@ -24,6 +25,8 @@ from src.interface.http.common.rate_limit import (
 from src.interface.http.common.user_agent_parser import parse_user_agent
 from src.interface.http.observability import increment_counter
 from src.interface.http.v1.schemas.auth import (
+    AcceptStudentInviteRequest,
+    AcceptStudentInviteResponse,
     LoginRequest,
     LogoutRequest,
     MeResponse,
@@ -49,6 +52,21 @@ def register(payload: RegisterRequest, facade=Depends(get_facade)) -> dict:
             default_role=payload.default_role,
         )
     )
+
+
+@router.post("/invites/accept", response_model=AcceptStudentInviteResponse)
+def accept_student_invite(
+    payload: AcceptStudentInviteRequest, facade=Depends(get_facade)
+) -> AcceptStudentInviteResponse:
+    """Принимает student invite и создает auth account."""
+
+    result = facade.execute(
+        AcceptStudentInviteCommand(
+            token=payload.token,
+            password=payload.password,
+        )
+    )
+    return AcceptStudentInviteResponse(**result)
 
 
 @router.post("/login", response_model=TokenPairResponse)

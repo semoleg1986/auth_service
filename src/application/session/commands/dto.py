@@ -42,3 +42,11 @@ class RegisterCommand:
     email: str
     password: str
     default_role: str
+
+
+@dataclass(frozen=True, slots=True)
+class AcceptStudentInviteCommand:
+    """Команда принятия student invite."""
+
+    token: str
+    password: str

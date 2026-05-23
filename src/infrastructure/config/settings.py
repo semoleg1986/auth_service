@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,6 +19,9 @@ class Settings:
     jwt_public_key_pem: str | None
     jwt_access_ttl_seconds: int
     jwt_refresh_ttl_seconds: int
+    users_service_base_url: str
+    users_service_token: str
+    users_service_timeout_seconds: float
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -32,8 +35,19 @@ class Settings:
             jwt_audience=os.getenv("AUTH_JWT_AUDIENCE", "platform_clients"),
             jwt_private_key_pem=os.getenv("AUTH_JWT_PRIVATE_KEY_PEM"),
             jwt_public_key_pem=os.getenv("AUTH_JWT_PUBLIC_KEY_PEM"),
-            jwt_access_ttl_seconds=int(os.getenv("AUTH_JWT_ACCESS_TTL_SECONDS", "3600")),
+            jwt_access_ttl_seconds=int(
+                os.getenv("AUTH_JWT_ACCESS_TTL_SECONDS", "3600")
+            ),
             jwt_refresh_ttl_seconds=int(
                 os.getenv("AUTH_JWT_REFRESH_TTL_SECONDS", str(60 * 60 * 24 * 30))
+            ),
+            users_service_base_url=os.getenv(
+                "AUTH_USERS_SERVICE_BASE_URL", "http://users_service:8002"
+            ),
+            users_service_token=os.getenv(
+                "AUTH_USERS_SERVICE_TOKEN", "dev-service-token"
+            ),
+            users_service_timeout_seconds=float(
+                os.getenv("AUTH_USERS_SERVICE_TIMEOUT_SECONDS", "5")
             ),
         )

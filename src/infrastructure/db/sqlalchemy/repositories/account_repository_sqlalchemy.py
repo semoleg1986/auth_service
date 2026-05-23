@@ -34,3 +34,8 @@ class SqlalchemyAccountRepository:
         stmt = select(AccountModel).where(AccountModel.email == email.strip().lower())
         model = self._db.execute(stmt).scalar_one_or_none()
         return account_mapper.to_entity(model) if model else None
+
+    def get_by_user_id(self, user_id: str) -> Account | None:
+        stmt = select(AccountModel).where(AccountModel.user_id == user_id.strip())
+        model = self._db.execute(stmt).scalar_one_or_none()
+        return account_mapper.to_entity(model) if model else None

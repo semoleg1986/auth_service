@@ -21,3 +21,6 @@ class AccountRepository(Protocol):
 
     def get_by_email(self, email: str) -> Account | None:
         """Возвращает аккаунт по email."""
+
+    def get_by_user_id(self, user_id: str) -> Account | None:
+        """Возвращает аккаунт по внешнему user_id."""
