@@ -56,14 +56,28 @@ def register(payload: RegisterRequest, facade=Depends(get_facade)) -> dict:
 
 @router.post("/invites/accept", response_model=AcceptStudentInviteResponse)
 def accept_student_invite(
-    payload: AcceptStudentInviteRequest, facade=Depends(get_facade)
+    payload: AcceptStudentInviteRequest,
+    user_agent_header: str | None = Header(default=None, alias="User-Agent"),
+    facade=Depends(get_facade),
 ) -> AcceptStudentInviteResponse:
     """Принимает student invite и создает auth account."""
 
+    parsed = parse_user_agent(payload.user_agent_raw or user_agent_header)
     result = facade.execute(
         AcceptStudentInviteCommand(
             token=payload.token,
             password=payload.password,
+            ip_address=payload.ip_address,
+            user_agent_raw=parsed.user_agent_raw,
+            device_type=payload.device_type or parsed.device_type,
+            os_name=payload.os_name or parsed.os_name,
+            os_version=payload.os_version or parsed.os_version,
+            browser_name=payload.browser_name or parsed.browser_name,
+            browser_version=payload.browser_version or parsed.browser_version,
+            client_name=payload.client_name or parsed.client_name,
+            country=payload.country,
+            city=payload.city,
+            session_fingerprint=payload.session_fingerprint,
         )
     )
     return AcceptStudentInviteResponse(**result)

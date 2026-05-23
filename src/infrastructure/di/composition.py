@@ -131,6 +131,9 @@ def build_runtime() -> RuntimeContainer:
                 service_token=settings.users_service_token,
                 timeout_seconds=settings.users_service_timeout_seconds,
             ),
+            token_issuer=token_issuer,
+            access_ttl_seconds=settings.jwt_access_ttl_seconds,
+            refresh_ttl_seconds=settings.jwt_refresh_ttl_seconds,
         ),
     )
     facade.register_command_handler(

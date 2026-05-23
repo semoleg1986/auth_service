@@ -54,14 +54,37 @@ class AcceptStudentInviteRequest(BaseModel):
 
     token: str = Field(min_length=16)
     password: str = Field(min_length=8)
+    ip_address: str | None = None
+    user_agent_raw: str | None = None
+    device_type: str | None = None
+    os_name: str | None = None
+    os_version: str | None = None
+    browser_name: str | None = None
+    browser_version: str | None = None
+    client_name: str | None = None
+    country: str | None = None
+    city: str | None = None
+    session_fingerprint: str | None = None
+
+
+class AuthUserResponse(BaseModel):
+    """Пользователь в auth response."""
+
+    account_id: str
+    user_id: str
+    email: EmailStr
+    roles: list[str]
+    status: str
 
 
 class AcceptStudentInviteResponse(BaseModel):
     """Ответ после принятия student invite."""
 
-    account_id: str
-    user_id: str
-    email: EmailStr
+    access_token: str
+    refresh_token: str
+    token_type: str
+    expires_in: int
+    user: AuthUserResponse
 
 
 class TokenPairResponse(BaseModel):
