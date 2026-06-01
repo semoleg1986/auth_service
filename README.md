@@ -62,5 +62,6 @@ make migrate-down-1
 
 ## Documentation
 
+- [ERROR_FORMAT.md](/Users/olegsemenov/Programming/curs/auth_service/docs/ERROR_FORMAT.md)
 - [JWT_CONTRACT.md](/Users/olegsemenov/Programming/curs/auth_service/docs/JWT_CONTRACT.md)
 - [postgres.md](/Users/olegsemenov/Programming/curs/auth_service/docs/postgres.md)

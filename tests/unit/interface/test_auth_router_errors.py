@@ -23,8 +23,21 @@ def _client() -> TestClient:
 def test_me_and_sessions_require_bearer_token() -> None:
     client = _client()
 
-    me = client.get("/v1/auth/me")
+    me = client.get(
+        "/v1/auth/me",
+        headers={
+            "X-Request-ID": "req-auth-me-001",
+            "X-Correlation-ID": "corr-auth-me-001",
+        },
+    )
     assert me.status_code == 401
+    assert me.headers.get("content-type") == "application/problem+json"
+    assert me.headers.get("X-Request-ID") == "req-auth-me-001"
+    assert me.headers.get("X-Correlation-ID") == "corr-auth-me-001"
+    assert me.json().get("type") == "https://api.example.com/problems/unauthorized"
+    assert me.json().get("status") == 401
+    assert me.json().get("request_id") == "req-auth-me-001"
+    assert me.json().get("correlation_id") == "corr-auth-me-001"
 
     sessions = client.get("/v1/auth/sessions")
     assert sessions.status_code == 401

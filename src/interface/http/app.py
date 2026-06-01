@@ -2,8 +2,7 @@
 
 from fastapi import FastAPI
 
-from src.domain.errors import DomainError
-from src.interface.http.errors import domain_error_handler
+from src.interface.http.errors import register_exception_handlers
 from src.interface.http.health import router as health_router
 from src.interface.http.observability import (
     configure_http_logging,
@@ -22,5 +21,5 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(auth_router)
     app.include_router(public_router)
-    app.add_exception_handler(DomainError, domain_error_handler)
+    register_exception_handlers(app)
     return app
