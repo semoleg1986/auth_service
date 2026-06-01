@@ -126,9 +126,22 @@ async def http_error_handler(
     )
 
 
+async def unexpected_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Конвертирует неожиданные ошибки в безопасный RFC7807 ответ."""
+
+    return _problem(
+        request,
+        status=500,
+        title="Внутренняя ошибка",
+        problem_type="https://api.example.com/problems/internal-error",
+        detail="Unhandled server error.",
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     """Регистрирует единый problem+json контракт ошибок."""
 
     app.add_exception_handler(DomainError, domain_error_handler)
     app.add_exception_handler(RequestValidationError, validation_error_handler)
     app.add_exception_handler(StarletteHTTPException, http_error_handler)
+    app.add_exception_handler(Exception, unexpected_error_handler)
