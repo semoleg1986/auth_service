@@ -1,4 +1,4 @@
-"""HTTP client for users_service student invite internal API."""
+"""HTTP client for users_service onboarding invite internal API."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from src.domain.errors import InvariantViolationError
 
 
 class UsersServiceStudentInviteClient:
-    """Consumes student invite tokens through users_service."""
+    """Consumes onboarding invite tokens through users_service."""
 
     def __init__(
         self, *, base_url: str, service_token: str, timeout_seconds: float
@@ -24,7 +24,7 @@ class UsersServiceStudentInviteClient:
     def consume(self, *, token: str, consumer: str) -> ConsumedStudentInvite:
         body = json.dumps({"token": token, "consumer": consumer}).encode("utf-8")
         request = Request(
-            f"{self._base_url}/internal/v1/student-invites/consume",
+            f"{self._base_url}/internal/v1/invites/consume",
             data=body,
             headers={
                 "Content-Type": "application/json",
@@ -43,9 +43,10 @@ class UsersServiceStudentInviteClient:
 
         return ConsumedStudentInvite(
             invite_id=str(payload["invite_id"]),
-            parent_user_id=str(payload["parent_user_id"]),
-            student_user_id=str(payload["student_user_id"]),
+            invite_type=str(payload["invite_type"]),
+            user_id=str(payload["user_id"]),
             email=str(payload["email"]),
+            roles=[str(role) for role in payload["roles"]],
             consumed_at=datetime.fromisoformat(
                 str(payload["consumed_at"]).replace("Z", "+00:00")
             ),

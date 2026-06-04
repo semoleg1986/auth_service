@@ -52,9 +52,10 @@ class _Ctx:
         self.uow = InMemoryUnitOfWork(repos)
         self.invite = ConsumedStudentInvite(
             invite_id="invite-1",
-            parent_user_id="parent-user-1",
-            student_user_id="student-user-1",
+            invite_type="student",
+            user_id="student-user-1",
             email="student@example.com",
+            roles=["student"],
             consumed_at=datetime.now(timezone.utc),
         )
 
@@ -116,10 +117,40 @@ def test_accept_student_invite_rejects_existing_student_user_id() -> None:
     )
     ctx.uow.repositories.accounts.add(existing)
 
-    with pytest.raises(InvariantViolationError, match="student уже существует"):
+    with pytest.raises(InvariantViolationError, match="user уже существует"):
         ctx.handler()(
             AcceptStudentInviteCommand(
                 token="invite-token-123456",
                 password="student-pass-123",
             )
         )
+
+
+def test_accept_staff_invite_creates_account_with_invite_roles() -> None:
+    ctx = _Ctx()
+    ctx.invite = ConsumedStudentInvite(
+        invite_id="invite-2",
+        invite_type="staff",
+        user_id="teacher-user-1",
+        email="teacher@example.com",
+        roles=["teacher", "content_manager"],
+        consumed_at=datetime.now(timezone.utc),
+    )
+
+    result = ctx.handler()(
+        AcceptStudentInviteCommand(
+            token="invite-token-123456",
+            password="teacher-pass-123",
+        )
+    )
+
+    user = result["user"]
+    assert isinstance(user, dict)
+    account = ctx.uow.repositories.accounts.get_by_id(str(user["account_id"]))
+    assert account is not None
+    assert account.user_id == "teacher-user-1"
+    assert account.email.value == "teacher@example.com"
+    assert {role.value for role in account.roles} == {"teacher", "content_manager"}
+    claims = ctx.token_issuer.decode_access(str(result["access_token"]))
+    assert claims["user_id"] == "teacher-user-1"
+    assert claims["roles"] == ["content_manager", "teacher"]

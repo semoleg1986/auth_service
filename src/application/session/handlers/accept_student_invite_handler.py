@@ -48,16 +48,14 @@ class AcceptStudentInviteHandler:
             consumer="auth_service",
         )
         email = Email(invite.email)
+        if not invite.roles:
+            raise InvariantViolationError("invite не содержит roles.")
 
         uow = self._uow_factory()
         try:
-            existing_by_user = uow.repositories.accounts.get_by_user_id(
-                invite.student_user_id
-            )
+            existing_by_user = uow.repositories.accounts.get_by_user_id(invite.user_id)
             if existing_by_user is not None:
-                raise InvariantViolationError(
-                    "Аккаунт для этого student уже существует."
-                )
+                raise InvariantViolationError("Аккаунт для этого user уже существует.")
 
             existing_by_email = uow.repositories.accounts.get_by_email(email.value)
             if existing_by_email is not None:
@@ -66,14 +64,16 @@ class AcceptStudentInviteHandler:
             now = self._clock.now()
             account = Account.register(
                 account_id=self._id_generator.new(),
-                user_id=invite.student_user_id,
+                user_id=invite.user_id,
                 email=email,
                 password_hash=PasswordHash(
                     self._password_hasher.hash(command.password)
                 ),
-                default_role=Role("student"),
+                default_role=Role(invite.roles[0]),
                 now=now,
             )
+            for role in invite.roles[1:]:
+                account.assign_role(role=Role(role), now=now)
             uow.repositories.accounts.add(account)
             session_id = self._id_generator.new()
             refresh_token_id = self._id_generator.new()

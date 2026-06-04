@@ -6,12 +6,28 @@ Identity and authentication service for the platform.
 
 `auth_service` owns:
 - account registration
+- invite acceptance for existing users_service profiles
 - login and logout
 - access and refresh tokens
 - JWKS publication
 - auth session lifecycle
 
 It does not own parent/student domain profiles or relationships.
+
+## Invite acceptance
+
+`POST /v1/auth/invites/accept` accepts a one-time onboarding token and creates
+an auth account linked to an existing `users_service.user_id`.
+
+Supported invite types are resolved by `users_service` through the internal
+endpoint `POST /internal/v1/invites/consume`:
+
+- `student` -> roles `student`
+- `staff` -> roles from the invite, for example `teacher` or `content_manager`
+
+Invariant: `auth_service` must not generate a new domain `user_id` during invite
+acceptance. The account `user_id` is always the `user_id` returned by
+`users_service`.
 
 ## Local run
 

@@ -43,7 +43,7 @@ class Role:
     value: str
 
     def __post_init__(self) -> None:
-        allowed = {"admin", "teacher", "parent", "student"}
+        allowed = {"admin", "teacher", "content_manager", "parent", "student"}
         role_value = self.value.strip().lower()
         if role_value not in allowed:
             raise ValidationError("Недопустимая роль пользователя.")
