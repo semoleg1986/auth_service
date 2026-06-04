@@ -32,4 +32,7 @@ class SqlalchemySessionRepository:
 
     def list_by_account_id(self, account_id: str) -> list[AuthSession]:
         stmt = select(AuthSessionModel).where(AuthSessionModel.account_id == account_id)
-        return [session_mapper.to_entity(item) for item in self._db.execute(stmt).scalars().all()]
+        return [
+            session_mapper.to_entity(item)
+            for item in self._db.execute(stmt).scalars().all()
+        ]

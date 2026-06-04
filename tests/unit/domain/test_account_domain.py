@@ -2,7 +2,11 @@ from datetime import UTC, datetime
 
 import pytest
 
-from src.domain.errors import AccessDeniedError, InvariantViolationError, ValidationError
+from src.domain.errors import (
+    AccessDeniedError,
+    InvariantViolationError,
+    ValidationError,
+)
 from src.domain.identity.account.entity import Account
 from src.domain.identity.account.policies import AccountPolicy
 from src.domain.identity.account.value_objects import UserAgent

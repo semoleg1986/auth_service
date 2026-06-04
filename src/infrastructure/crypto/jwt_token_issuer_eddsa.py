@@ -177,7 +177,7 @@ class JwtEdDsaTokenIssuer:
             )
             if not isinstance(public_key, Ed25519PublicKey):
                 raise ValueError("Ожидался Ed25519 public key.")
-            # Только с public key нельзя подписывать access/refresh, поэтому генерируем runtime pair.
+            # Public-only config cannot sign tokens, so generate a runtime pair.
             # Public key из параметра используется для валидации в других адаптерах.
             private_key = Ed25519PrivateKey.generate()
             return private_key, public_key

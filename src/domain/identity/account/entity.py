@@ -79,7 +79,9 @@ class Account(AggregateRoot):
         self.roles.add(role)
         self.touch(now)
         self._raise_event(
-            AccountRoleAssigned(account_id=self.aggregate_id, role=role.value, occurred_at=now)
+            AccountRoleAssigned(
+                account_id=self.aggregate_id, role=role.value, occurred_at=now
+            )
         )
 
     def revoke_role(self, *, role: Role, now: datetime) -> None:

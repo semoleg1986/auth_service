@@ -1,15 +1,15 @@
 """create auth tables
 
 Revision ID: 20260405_0001
-Revises: 
+Revises:
 Create Date: 2026-04-05
 """
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "20260405_0001"
@@ -38,7 +38,12 @@ def upgrade() -> None:
     op.create_table(
         "auth_sessions",
         sa.Column("id", sa.String(length=36), primary_key=True),
-        sa.Column("account_id", sa.String(length=36), sa.ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "account_id",
+            sa.String(length=36),
+            sa.ForeignKey("accounts.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("user_id", sa.String(length=36), nullable=False),
         sa.Column("refresh_token_id", sa.String(length=36), nullable=True),
         sa.Column("status", sa.String(length=32), nullable=False),
@@ -54,7 +59,9 @@ def upgrade() -> None:
         sa.Column("city", sa.String(length=128), nullable=True),
         sa.Column("auth_method", sa.String(length=32), nullable=False),
         sa.Column("mfa_used", sa.Boolean(), nullable=False, server_default=sa.false()),
-        sa.Column("is_trusted", sa.Boolean(), nullable=False, server_default=sa.false()),
+        sa.Column(
+            "is_trusted", sa.Boolean(), nullable=False, server_default=sa.false()
+        ),
         sa.Column("risk_level", sa.String(length=16), nullable=False),
         sa.Column("session_fingerprint", sa.Text(), nullable=False),
         sa.Column("request_count", sa.Integer(), nullable=False, server_default="1"),
@@ -68,16 +75,37 @@ def upgrade() -> None:
         sa.Column("revoke_reason", sa.Text(), nullable=True),
         sa.Column("version", sa.Integer(), nullable=False, server_default="1"),
     )
-    op.create_index("ix_auth_sessions_account_id", "auth_sessions", ["account_id"], unique=False)
-    op.create_index("ix_auth_sessions_user_id", "auth_sessions", ["user_id"], unique=False)
-    op.create_index("ix_auth_sessions_refresh_token_id", "auth_sessions", ["refresh_token_id"], unique=False)
-    op.create_index("ix_auth_sessions_status", "auth_sessions", ["status"], unique=False)
+    op.create_index(
+        "ix_auth_sessions_account_id", "auth_sessions", ["account_id"], unique=False
+    )
+    op.create_index(
+        "ix_auth_sessions_user_id", "auth_sessions", ["user_id"], unique=False
+    )
+    op.create_index(
+        "ix_auth_sessions_refresh_token_id",
+        "auth_sessions",
+        ["refresh_token_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_auth_sessions_status", "auth_sessions", ["status"], unique=False
+    )
 
     op.create_table(
         "refresh_tokens",
         sa.Column("id", sa.String(length=36), primary_key=True),
-        sa.Column("account_id", sa.String(length=36), sa.ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("session_id", sa.String(length=36), sa.ForeignKey("auth_sessions.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "account_id",
+            sa.String(length=36),
+            sa.ForeignKey("accounts.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "session_id",
+            sa.String(length=36),
+            sa.ForeignKey("auth_sessions.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("status", sa.String(length=16), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("replaced_by_token_id", sa.String(length=36), nullable=True),
@@ -85,10 +113,21 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("version", sa.Integer(), nullable=False, server_default="1"),
     )
-    op.create_index("ix_refresh_tokens_account_id", "refresh_tokens", ["account_id"], unique=False)
-    op.create_index("ix_refresh_tokens_session_id", "refresh_tokens", ["session_id"], unique=False)
-    op.create_index("ix_refresh_tokens_status", "refresh_tokens", ["status"], unique=False)
-    op.create_index("ix_refresh_tokens_replaced_by_token_id", "refresh_tokens", ["replaced_by_token_id"], unique=False)
+    op.create_index(
+        "ix_refresh_tokens_account_id", "refresh_tokens", ["account_id"], unique=False
+    )
+    op.create_index(
+        "ix_refresh_tokens_session_id", "refresh_tokens", ["session_id"], unique=False
+    )
+    op.create_index(
+        "ix_refresh_tokens_status", "refresh_tokens", ["status"], unique=False
+    )
+    op.create_index(
+        "ix_refresh_tokens_replaced_by_token_id",
+        "refresh_tokens",
+        ["replaced_by_token_id"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:

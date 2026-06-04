@@ -71,7 +71,6 @@ def build_runtime() -> RuntimeContainer:
     )
 
     repositories = None
-    uow_factory = None
     if settings.use_inmemory:
         repositories = InMemoryRepositoryProvider(
             accounts=InMemoryAccountRepository(),
@@ -79,14 +78,19 @@ def build_runtime() -> RuntimeContainer:
             refresh_tokens=InMemoryRefreshTokenRepository(),
         )
         uow = InMemoryUnitOfWork(repositories)
-        uow_factory = lambda: uow
+
+        def uow_factory():
+            return uow
+
     else:
         engine = build_engine(settings.database_url)
         if settings.auto_create_schema:
             Base.metadata.create_all(bind=engine)
         session_factory = build_session_factory(engine)
         uow = SqlalchemyUnitOfWork(session_factory)
-        uow_factory = lambda: SqlalchemyUnitOfWork(session_factory)
+
+        def uow_factory():
+            return SqlalchemyUnitOfWork(session_factory)
 
     # Seed demo account for local development.
     now = clock.now()

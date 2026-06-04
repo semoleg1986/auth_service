@@ -19,13 +19,21 @@ def _client() -> TestClient:
 def _auth_token(client: TestClient) -> str:
     register = client.post(
         "/v1/auth/register",
-        json={"email": "me1@example.com", "password": "pass-12345", "default_role": "parent"},
+        json={
+            "email": "me1@example.com",
+            "password": "pass-12345",
+            "default_role": "parent",
+        },
     )
     assert register.status_code == 200
 
     login = client.post(
         "/v1/auth/login",
-        json={"email": "me1@example.com", "password": "pass-12345", "session_fingerprint": "fp-me"},
+        json={
+            "email": "me1@example.com",
+            "password": "pass-12345",
+            "session_fingerprint": "fp-me",
+        },
     )
     assert login.status_code == 200
     return login.json()["access_token"]
@@ -39,7 +47,9 @@ def test_me_and_sessions_success() -> None:
     assert me.status_code == 200
     assert me.json()["email"] == "me1@example.com"
 
-    sessions = client.get("/v1/auth/sessions", headers={"Authorization": f"Bearer {token}"})
+    sessions = client.get(
+        "/v1/auth/sessions", headers={"Authorization": f"Bearer {token}"}
+    )
     assert sessions.status_code == 200
     assert len(sessions.json()["items"]) >= 1
 

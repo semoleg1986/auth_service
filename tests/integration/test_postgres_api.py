@@ -5,7 +5,11 @@ import os
 import pytest
 
 from src.application.identity.queries.dto import GetMeQuery
-from src.application.session.commands.dto import LoginCommand, LogoutCommand, RegisterCommand
+from src.application.session.commands.dto import (
+    LoginCommand,
+    LogoutCommand,
+    RegisterCommand,
+)
 from src.application.session.queries.dto import ListSessionsQuery
 from src.application.token.commands.dto import RefreshCommand
 from src.infrastructure.di.composition import build_runtime
@@ -66,10 +70,10 @@ def test_postgres_auth_flow() -> None:
     assert refreshed.refresh_token != login.refresh_token
 
     refresh_claims = runtime.token_issuer.decode_refresh(refreshed.refresh_token)
-    facade.execute(
-        LogoutCommand(session_id=str(refresh_claims["session_id"]))
-    )
+    facade.execute(LogoutCommand(session_id=str(refresh_claims["session_id"])))
 
-    sessions_after = facade.query(ListSessionsQuery(account_id=str(access_claims["sub"])))
+    sessions_after = facade.query(
+        ListSessionsQuery(account_id=str(access_claims["sub"]))
+    )
     assert len(sessions_after) == 1
     assert sessions_after[0].status == "closed"

@@ -20,4 +20,3 @@ class Argon2PasswordHasher:
             return False
         except Exception:
             return False
-

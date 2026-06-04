@@ -6,7 +6,6 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-
 Handler = Callable[[Any], Any]
 
 
@@ -47,7 +46,9 @@ class ApplicationFacade:
         handler = self.query_handlers[type(query)]
         return handler(query)
 
-    def register_command_handler(self, command_type: type[Any], handler: Handler) -> None:
+    def register_command_handler(
+        self, command_type: type[Any], handler: Handler
+    ) -> None:
         """Регистрирует обработчик команды."""
 
         self.command_handlers[command_type] = handler

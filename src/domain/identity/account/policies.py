@@ -14,7 +14,9 @@ class AccountPolicy:
             raise AccessDeniedError("Операция доступна только администратору.")
 
     @staticmethod
-    def ensure_self_or_admin(actor_id: str, target_user_id: str, actor_roles: set[str]) -> None:
+    def ensure_self_or_admin(
+        actor_id: str, target_user_id: str, actor_roles: set[str]
+    ) -> None:
         """Проверяет, что операция выполняется владельцем или админом."""
 
         if actor_id == target_user_id or "admin" in actor_roles:

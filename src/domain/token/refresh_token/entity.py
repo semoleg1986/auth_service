@@ -47,7 +47,9 @@ class RefreshToken(AggregateRoot):
             updated_at=now,
         )
         token._raise_event(
-            RefreshTokenIssued(token_id=token_id, account_id=account_id, occurred_at=now)
+            RefreshTokenIssued(
+                token_id=token_id, account_id=account_id, occurred_at=now
+            )
         )
         return token
 
@@ -81,4 +83,6 @@ class RefreshToken(AggregateRoot):
             return
         self.status = RefreshTokenStatus.REVOKED
         self.touch(now)
-        self._raise_event(RefreshTokenRevoked(token_id=self.aggregate_id, occurred_at=now))
+        self._raise_event(
+            RefreshTokenRevoked(token_id=self.aggregate_id, occurred_at=now)
+        )

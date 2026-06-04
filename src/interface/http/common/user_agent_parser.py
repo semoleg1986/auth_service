@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,9 +41,7 @@ def parse_user_agent(user_agent: str | None) -> ParsedClientInfo:
     """Парсит User-Agent в базовые аналитические признаки."""
 
     if not user_agent:
-        return ParsedClientInfo(
-            None, "unknown", None, None, None, None, None, "medium"
-        )
+        return ParsedClientInfo(None, "unknown", None, None, None, None, None, "medium")
 
     ua = user_agent.strip()
     ua_l = ua.lower()
@@ -90,4 +88,3 @@ def parse_user_agent(user_agent: str | None) -> ParsedClientInfo:
         client_name=client_name,
         risk_level=risk_level,
     )
-

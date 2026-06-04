@@ -46,10 +46,14 @@ def test_jwt_issuer_loads_private_key_pem_branch() -> None:
 
 def test_jwt_issuer_public_key_only_branch_and_empty_roles() -> None:
     private = Ed25519PrivateKey.generate()
-    public_pem = private.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    ).decode("utf-8")
+    public_pem = (
+        private.public_key()
+        .public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        .decode("utf-8")
+    )
 
     issuer = JwtEdDsaTokenIssuer(public_key_pem=public_pem)
     now = datetime.now(UTC)

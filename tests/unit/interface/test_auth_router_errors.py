@@ -75,8 +75,8 @@ def test_logout_and_refresh_routes_operate() -> None:
     )
     assert refreshed.status_code == 200
 
-    session_id = refreshed.json()["refresh_token"]
-    # session_id напрямую API не возвращает, поэтому проверяем только контракт logout-валидации.
+    # session_id напрямую API не возвращает, поэтому проверяем только
+    # контракт logout-валидации.
     bad_logout = client.post("/v1/auth/logout", json={"session_id": "missing"})
     assert bad_logout.status_code in {204, 404}
 

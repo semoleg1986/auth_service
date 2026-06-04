@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime
-import hashlib
 
 from src.domain.errors import InvariantViolationError
 from src.domain.session.auth_session.events import SessionClosed, SessionStarted
@@ -109,7 +109,9 @@ class AuthSession(AggregateRoot):
             updated_at=now,
         )
         session._raise_event(
-            SessionStarted(session_id=session_id, account_id=account_id, occurred_at=now)
+            SessionStarted(
+                session_id=session_id, account_id=account_id, occurred_at=now
+            )
         )
         return session
 
